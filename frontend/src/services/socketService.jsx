@@ -71,68 +71,80 @@ class SocketService {
 
   // Join user to their personal room
   joinUserRoom(userId) {
-    if (this.requestNamespace && this.requestNamespace.connected) {
+    if (this.requestNamespace) {
       this.requestNamespace.emit('join-user-room', userId);
-      console.log('Joined user room:', userId);
+      console.log('socketService: Joined user room:', userId);
     }
   }
 
   // Join mechanic to their service area
   joinMechanicArea(mechanicId, location) {
-    if (this.requestNamespace && this.requestNamespace.connected) {
+    if (this.requestNamespace) {
       this.requestNamespace.emit('join-mechanic-area', mechanicId, location);
-      console.log('Joined mechanic area:', mechanicId, location);
+      console.log('socketService: Joined mechanic area:', mechanicId, location);
     }
   }
 
   // Join a service request room for real-time updates
   joinRequest(requestId) {
-    if (this.requestNamespace && this.requestNamespace.connected) {
+    if (this.requestNamespace) {
       this.requestNamespace.emit('join_request', { requestId });
-      console.log('Joined request room:', requestId);
+      console.log('socketService: Joined request room:', requestId);
     }
   }
 
   // Leave a service request room
   leaveRequest(requestId) {
-    if (this.requestNamespace && this.requestNamespace.connected) {
+    if (this.requestNamespace) {
       this.requestNamespace.emit('leave_request', { requestId });
-      console.log('Left request room:', requestId);
+      console.log('socketService: Left request room:', requestId);
     }
   }
 
   // Update location (for mechanics)
-  updateLocation(location) {
-    if (this.requestNamespace && this.requestNamespace.connected) {
-      this.requestNamespace.emit('location-update', {
+  updateLocation(location, requestId = null, mechanicId = null) {
+    if (this.requestNamespace) {
+      const payload = {
         lat: location.lat,
         lng: location.lng,
         accuracy: location.accuracy || 10,
-      });
+        heading: location.heading,
+        speed: location.speed,
+      };
+      if (requestId) {
+        payload.requestId = requestId;
+      }
+      if (mechanicId) {
+        payload.mechanicId = mechanicId;
+      }
+      this.requestNamespace.emit('location-update', payload);
+      console.log('socketService: Emitted location-update:', payload);
     }
   }
 
   // Send chat message
   sendMessage(requestId, message, sender = 'customer') {
-    if (this.requestNamespace && this.requestNamespace.connected) {
+    if (this.requestNamespace) {
       this.requestNamespace.emit('send-message', {
         requestId,
         message,
         sender,
         timestamp: new Date().toISOString(),
       });
+      console.log('socketService: Sent message:', { requestId, message, sender });
     }
   }
 
   // Send emergency alert
   sendEmergencyAlert(requestId, alertType, location) {
-    if (this.requestNamespace && this.requestNamespace.connected) {
+    if (this.requestNamespace) {
       this.requestNamespace.emit('emergency-alert', {
         requestId,
         type: alertType,
         location,
         timestamp: new Date().toISOString(),
       });
+      console.log('socketService: Sent emergency alert:', { requestId, alertType });
     }
   }
 

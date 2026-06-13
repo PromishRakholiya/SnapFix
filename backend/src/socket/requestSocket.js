@@ -94,7 +94,22 @@ const initializeRequestSocket = (io) => {
 
     // Handle location updates
     socket.on('location-update', (data) => {
-      const { userId, location, heading, speed } = data;
+      const { userId, location, heading, speed, requestId, lat, lng } = data;
+      const mechanicId = socket.mechanicId || data.mechanicId;
+      
+      // If direct request tracking (exact lat/lng coordinates to a specific request room)
+      if (requestId && lat !== undefined && lng !== undefined) {
+        requestNamespace.to(`request_${requestId}`).emit('location_updated', {
+          mechanicId,
+          lat,
+          lng,
+          accuracy: data.accuracy || 10,
+          heading,
+          speed,
+          timestamp: new Date()
+        });
+        return;
+      }
       
       // Broadcast location update to relevant parties
       if (socket.mechanicId) {

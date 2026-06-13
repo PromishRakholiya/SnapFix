@@ -602,6 +602,7 @@ const AssignedRequests = () => {
         onClose={() => setShowNavigationModal(false)}
         request={selectedRequest}
         mechanicLocation={user?.location}
+        onStatusUpdate={handleStatusUpdate}
       />
     </>
   );

@@ -50,9 +50,24 @@ const getNearbyMechanics = async (req, res) => {
     console.log('Found mechanics:', mechanics.length);
     console.log('Filter used:', filter);
 
+    // Fetch live completed jobs counts for these mechanics from the ServiceRequest collection
+    const mechanicIds = mechanics.map(m => m._id);
+    const completedCounts = await ServiceRequest.aggregate([
+      { $match: { mechanicId: { $in: mechanicIds }, status: 'completed' } },
+      { $group: { _id: '$mechanicId', count: { $sum: 1 } } }
+    ]);
+
+    const completedCountMap = {};
+    completedCounts.forEach(item => {
+      if (item._id) {
+        completedCountMap[item._id.toString()] = item.count;
+      }
+    });
+
     // Calculate distances and filter by maxDistance
     const mechanicsWithDistance = mechanics
       .map(mechanic => {
+        const completedJobs = completedCountMap[mechanic._id.toString()] || 0;
         if (mechanic.location && mechanic.location.lat && mechanic.location.lng) {
           const distance = calculateDistance(
             parseFloat(latitude),
@@ -61,10 +76,10 @@ const getNearbyMechanics = async (req, res) => {
             mechanic.location.lng  // longitude
           );
           console.log(`Mechanic ${mechanic.name}: distance = ${distance}km`);
-          return { ...mechanic, distance };
+          return { ...mechanic, completedJobs, distance };
         }
         console.log(`Mechanic ${mechanic.name}: no location data`);
-        return { ...mechanic, distance: null };
+        return { ...mechanic, completedJobs, distance: null };
       })
       .filter(mechanic => mechanic.distance !== null && (maxDistance === 'all' || mechanic.distance <= parseFloat(maxDistance)))
       .sort((a, b) => {
@@ -154,8 +169,14 @@ const getMechanicDetails = async (req, res) => {
       createdAt: request.completedAt
     }));
 
+    const completedJobsCount = await ServiceRequest.countDocuments({
+      mechanicId,
+      status: 'completed'
+    });
+
     const mechanicWithReviews = {
       ...mechanic,
+      completedJobs: completedJobsCount,
       reviews
     };
 

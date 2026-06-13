@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { 
@@ -15,48 +15,123 @@ import Button from '../common/Button';
 import requestService from '../../services/requestService';
 import toast from 'react-hot-toast';
 
+// Helper component to dynamically pan map when location changes
+const RecenterMap = ({ center, bounds }) => {
+  const map = useMap();
+  useEffect(() => {
+    try {
+      if (bounds && bounds[0] && bounds[1] && !isNaN(bounds[0][0]) && !isNaN(bounds[0][1])) {
+        map.fitBounds(bounds, { padding: [50, 50] });
+      } else if (center && !isNaN(center[0]) && !isNaN(center[1])) {
+        map.setView(center, map.getZoom());
+      }
+    } catch (error) {
+      console.error("Leaflet recentering error caught:", error);
+    }
+  }, [center, bounds, map]);
+  return null;
+};
+
 // Custom icons for different markers
-const customerIcon = new L.Icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
+const customerIcon = L.divIcon({
+  className: '',
+  html: `
+    <div class="relative flex items-center justify-center">
+      <div class="absolute w-8 h-8 bg-blue-500/20 rounded-full animate-pulse"></div>
+      <div class="w-6 h-6 bg-blue-600 border-2 border-white rounded-full flex items-center justify-center shadow-md">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-3.5 h-3.5 text-white">
+          <path d="M11.47 3.84a.75.75 0 011.06 0l8.69 8.69a.75.75 0 101.06-1.06l-8.689-8.69a2.25 2.25 0 00-3.182 0l-8.69 8.69a.75.75 0 001.06 1.06l8.69-8.69z" />
+          <path d="M12 5.432l8.159 8.159c.03.03.06.058.091.086v6.198c0 1.035-.84 1.875-1.875 1.875H15a.75.75 0 01-.75-.75v-4.5a.75.75 0 00-.75-.75h-3a.75.75 0 00-.75.75V21a.75.75 0 01-.75.75H5.625a1.875 1.875 0 01-1.875-1.875v-6.198a2.29 2.29 0 00.091-.086L12 5.43z" />
+        </svg>
+      </div>
+    </div>
+  `,
+  iconSize: [32, 32],
+  iconAnchor: [16, 16]
 });
 
-const mechanicIcon = new L.Icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
+const mechanicIcon = L.divIcon({
+  className: '',
+  html: `
+    <div class="relative flex items-center justify-center">
+      <div class="absolute w-8 h-8 bg-emerald-500/30 rounded-full animate-ping"></div>
+      <div class="w-8 h-8 bg-emerald-500 border-2 border-white rounded-full flex items-center justify-center shadow-lg">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4 text-white">
+          <path d="M3.375 3C2.395 3 1.6 3.795 1.6 4.775V15.75c0 .98.795 1.775 1.775 1.775h1.723a3 3 0 005.804 0h3.296a3 3 0 005.804 0h1.723c.98 0 1.775-.795 1.775-1.775v-3.775c0-.573-.276-1.111-.743-1.448l-3.417-2.47a2.25 2.25 0 00-1.325-.432H13.5v-3C13.5 3.795 12.705 3 11.725 3H3.375zM17.25 18a1.5 1.5 0 110-3 1.5 1.5 0 010 3zM7.5 18a1.5 1.5 0 110-3 1.5 1.5 0 010 3z" />
+        </svg>
+      </div>
+    </div>
+  `,
+  iconSize: [32, 32],
+  iconAnchor: [16, 16]
 });
 
 const RequestTracker = ({ request, onStatusUpdate, onNewMessage }) => {
   const [mechanicLocation, setMechanicLocation] = useState(null);
   const [estimatedArrival, setEstimatedArrival] = useState(null);
-  const [route] = useState([]);
+  const [route, setRoute] = useState([]);
+
+  useEffect(() => {
+    if (mechanicLocation && request?.location) {
+      const fetchRoute = async () => {
+        try {
+          const url = `https://router.project-osrm.org/route/v1/driving/${mechanicLocation.lng},${mechanicLocation.lat};${request.location.lng},${request.location.lat}?overview=full&geometries=geojson`;
+          const response = await fetch(url);
+          const data = await response.json();
+          if (data.routes && data.routes.length > 0) {
+            const coordinates = data.routes[0].geometry.coordinates.map(coord => [coord[1], coord[0]]);
+            setRoute(coordinates);
+          } else {
+            setRoute([
+              [mechanicLocation.lat, mechanicLocation.lng],
+              [request.location.lat, request.location.lng]
+            ]);
+          }
+        } catch (error) {
+          console.error('Error fetching street route:', error);
+          setRoute([
+            [mechanicLocation.lat, mechanicLocation.lng],
+            [request.location.lat, request.location.lng]
+          ]);
+        }
+      };
+      fetchRoute();
+    } else {
+      setRoute([]);
+    }
+  }, [mechanicLocation, request?.location]);
   const [showChat, setShowChat] = useState(false);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
 
   const mechanic = request.mechanic || request.mechanicId;
 
+  const getMechanicIdString = (mechanicObjOrId) => {
+    if (!mechanicObjOrId) return '';
+    if (typeof mechanicObjOrId === 'string') return mechanicObjOrId;
+    if (typeof mechanicObjOrId === 'object' && mechanicObjOrId._id) return mechanicObjOrId._id;
+    return String(mechanicObjOrId);
+  };
+
+  const activeMechanicId = getMechanicIdString(request.mechanicId) || getMechanicIdString(request.mechanic);
+
+  const isValidLatLng = (lat, lng) => {
+    return typeof lat === 'number' && typeof lng === 'number' && !isNaN(lat) && !isNaN(lng);
+  };
+
   // Get map center and bounds
   const getMapCenter = useCallback(() => {
-    if (mechanicLocation) {
+    if (mechanicLocation && isValidLatLng(request.location?.lat, request.location?.lng) && isValidLatLng(mechanicLocation.lat, mechanicLocation.lng)) {
       return [
         (request.location.lat + mechanicLocation.lat) / 2,
         (request.location.lng + mechanicLocation.lng) / 2
       ];
     }
-    return [request.location.lat, request.location.lng];
+    return isValidLatLng(request.location?.lat, request.location?.lng) ? [request.location.lat, request.location.lng] : [22.30389, 70.80216];
   }, [request.location, mechanicLocation]);
 
   const getMapBounds = useCallback(() => {
-    if (mechanicLocation) {
+    if (mechanicLocation && isValidLatLng(request.location?.lat, request.location?.lng) && isValidLatLng(mechanicLocation.lat, mechanicLocation.lng)) {
       return [
         [Math.min(request.location.lat, mechanicLocation.lat) - 0.01,
          Math.min(request.location.lng, mechanicLocation.lng) - 0.01],
@@ -75,7 +150,13 @@ const RequestTracker = ({ request, onStatusUpdate, onNewMessage }) => {
 
       // Listen for mechanic location updates
       socketService.onLocationUpdate((data) => {
-        if (data.mechanicId === request.mechanicId) {
+        console.log('RequestTracker received location_updated event:', data);
+        const senderMechanicId = getMechanicIdString(data.mechanicId);
+        const expectedId = getMechanicIdString(request.mechanicId) || getMechanicIdString(request.mechanic);
+        console.log('ID comparison - Sender:', senderMechanicId, 'Expected:', expectedId);
+        
+        if (senderMechanicId && expectedId && senderMechanicId === expectedId) {
+          console.log('ID match successful! Updating location on map:', { lat: data.lat, lng: data.lng });
           setMechanicLocation({
             lat: data.lat,
             lng: data.lng,
@@ -86,6 +167,8 @@ const RequestTracker = ({ request, onStatusUpdate, onNewMessage }) => {
           if (data.estimatedArrival) {
             setEstimatedArrival(data.estimatedArrival);
           }
+        } else {
+          console.warn('ID mismatch or missing values. Skipping map update.');
         }
       });
 
@@ -295,6 +378,7 @@ const RequestTracker = ({ request, onStatusUpdate, onNewMessage }) => {
             style={{ height: '100%', width: '100%' }}
             bounds={getMapBounds()}
           >
+            <RecenterMap center={getMapCenter()} bounds={getMapBounds()} />
             <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

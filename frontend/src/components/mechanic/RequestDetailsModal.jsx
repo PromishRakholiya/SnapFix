@@ -24,11 +24,19 @@ const RequestDetailsModal = ({
     }
   };
 
-  const openGoogleMaps = () => {
+  const openGoogleMaps = async () => {
     if (!request?.location) return;
 
-    const { lat, lng, address } = request.location;
-    const destination = address || `${lat},${lng}`;
+    if (request.status === "assigned" && onStatusUpdate) {
+      try {
+        await onStatusUpdate(request._id, "enroute");
+      } catch (error) {
+        console.error("Failed to automatically update status to enroute:", error);
+      }
+    }
+
+    const { lat, lng } = request.location;
+    const destination = `${lat},${lng}`;
     const url = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`;
     window.open(url, "_blank");
   };

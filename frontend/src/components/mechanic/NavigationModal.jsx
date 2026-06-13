@@ -13,7 +13,7 @@ import mechanicApi from '../../api/mechanicApi';
 import { formatDistance, formatDuration } from '../../utils/helpers';
 import toast from 'react-hot-toast';
 
-const NavigationModal = ({ isOpen, onClose, request, mechanicLocation }) => {
+const NavigationModal = ({ isOpen, onClose, request, mechanicLocation, onStatusUpdate }) => {
   const [distance, setDistance] = useState(null);
   const [estimatedTime, setEstimatedTime] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -91,26 +91,42 @@ const NavigationModal = ({ isOpen, onClose, request, mechanicLocation }) => {
     return R * c;
   };
 
-  const openGoogleMaps = () => {
+  const handleNavigationTrigger = async () => {
+    if (request && request.status === 'assigned') {
+      try {
+        const response = await mechanicApi.updateRequestStatus(request._id, { status: 'enroute' });
+        if (response.success && onStatusUpdate) {
+          onStatusUpdate(request._id, 'enroute');
+        }
+      } catch (error) {
+        console.error('Failed to automatically update status to enroute:', error);
+      }
+    }
+  };
+
+  const openGoogleMaps = async () => {
     if (!request?.location) return;
+    await handleNavigationTrigger();
     
-    const { lat, lng, address } = request.location;
-    const destination = address || `${lat},${lng}`;
+    const { lat, lng } = request.location;
+    const destination = `${lat},${lng}`;
     const url = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`;
     window.open(url, '_blank');
   };
 
-  const openAppleMaps = () => {
+  const openAppleMaps = async () => {
     if (!request?.location) return;
+    await handleNavigationTrigger();
     
-    const { lat, lng, address } = request.location;
-    const destination = address || `${lat},${lng}`;
+    const { lat, lng } = request.location;
+    const destination = `${lat},${lng}`;
     const url = `http://maps.apple.com/?daddr=${encodeURIComponent(destination)}`;
     window.open(url, '_blank');
   };
 
-  const openWaze = () => {
+  const openWaze = async () => {
     if (!request?.location) return;
+    await handleNavigationTrigger();
     
     const { lat, lng } = request.location;
     const url = `https://waze.com/ul?ll=${lat},${lng}&navigate=yes`;
@@ -141,6 +157,9 @@ const NavigationModal = ({ isOpen, onClose, request, mechanicLocation }) => {
       
       if (response.success) {
         toast.success(`Request marked as ${status}`);
+        if (onStatusUpdate) {
+          onStatusUpdate(request._id, status);
+        }
         onClose(); // Close the modal after successful update
       } else {
         toast.error('Failed to update request status');
@@ -347,6 +366,18 @@ const NavigationModal = ({ isOpen, onClose, request, mechanicLocation }) => {
               icon={<ClockIcon className="h-4 w-4" />}
             >
               Mark as En Route
+            </Button>
+
+            <Button
+              onClick={() => {
+                localStorage.setItem(`simulate_${request._id}`, 'true');
+                updateRequestStatus('enroute');
+              }}
+              variant="success"
+              className="w-full justify-center bg-emerald-600 hover:bg-emerald-700 text-white"
+              icon={<TruckIcon className="h-4 w-4" />}
+            >
+              Simulate Live Journey (Demo)
             </Button>
           </div>
 
