@@ -1,0 +1,278 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+
+@layer base {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  
+  html {
+    scroll-behavior: smooth;
+    color-scheme: dark;
+  }
+  
+  body {
+    font-family: 'Sora', 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background: #0a0a0a;
+    color: #e5e5e5;
+    overflow-x: hidden;
+  }
+
+  ::selection {
+    background: rgba(245, 158, 11, 0.3);
+    color: #fff;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Sora', sans-serif;
+    letter-spacing: -0.025em;
+    color: #fff;
+  }
+
+  /* Force all inputs/selects/textareas to dark */
+  input, select, textarea {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    color: #e5e5e5 !important;
+  }
+
+  input::placeholder, textarea::placeholder {
+    color: #737373 !important;
+  }
+
+  input:focus, select:focus, textarea:focus {
+    border-color: rgba(245, 158, 11, 0.5) !important;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15) !important;
+    outline: none !important;
+  }
+
+  option {
+    background-color: #1a1a1a;
+    color: #e5e5e5;
+  }
+}
+
+@layer components {
+  /* ---- Premium Glass Panels ---- */
+  .glass-panel {
+    background: rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 1.5rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.04);
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .glass-panel-hover {
+    background: rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 1.5rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.04);
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .glass-panel-hover:hover {
+    background: rgba(255, 255, 255, 0.07);
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.06);
+    transform: translateY(-4px);
+  }
+  
+  .card {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 1.5rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 1.5rem;
+  }
+  
+  .card-hover {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 1.5rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 1.5rem;
+  }
+
+  .card-hover:hover {
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+    transform: translateY(-4px);
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  /* ---- Premium Buttons ---- */
+  .btn-primary {
+    @apply relative overflow-hidden bg-gradient-to-r from-primary-500 to-primary-600 text-black font-semibold py-3 px-6 rounded-2xl shadow-lg transition-all duration-300 transform hover:-translate-y-1 hover:shadow-glow-primary focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-[#0a0a0a];
+  }
+  
+  .btn-secondary {
+    @apply bg-white/[0.06] backdrop-blur-md border border-white/[0.1] hover:bg-white/[0.1] text-neutral-200 font-medium py-3 px-6 rounded-2xl shadow-soft transition-all duration-300 transform hover:-translate-y-1 hover:shadow-soft-hover focus:outline-none focus:ring-2 focus:ring-white/20 focus:ring-offset-2 focus:ring-offset-[#0a0a0a];
+  }
+  
+  .btn-success {
+    @apply bg-success-500 hover:bg-success-600 text-white font-medium py-3 px-6 rounded-2xl transition-all duration-300 shadow-md hover:shadow-lg focus:outline-none;
+  }
+  
+  .btn-danger {
+    @apply bg-danger-500 hover:bg-danger-600 text-white font-medium py-3 px-6 rounded-2xl transition-all duration-300 shadow-md hover:shadow-lg focus:outline-none;
+  }
+
+  .btn-outline {
+    @apply bg-transparent border-2 border-primary-500/30 text-primary-400 hover:bg-primary-500/10 hover:border-primary-500/50 hover:text-primary-300 font-semibold py-3 px-6 rounded-2xl transition-all duration-300 transform hover:-translate-y-1 focus:outline-none;
+  }
+  
+  /* ---- Dark Inputs ---- */
+  .input-field {
+    @apply w-full px-4 py-3 bg-white/[0.05] border border-white/[0.1] rounded-2xl text-neutral-100 placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500/40 transition-all duration-300;
+  }
+  
+  /* ---- Status Badges (dark, pill-shaped) ---- */
+  .status-pending {
+    @apply bg-warning-500/15 text-warning-400 border border-warning-500/20 rounded-full px-3.5 py-1.5 text-xs font-bold tracking-wide uppercase;
+  }
+  
+  .status-assigned {
+    @apply bg-primary-500/15 text-primary-400 border border-primary-500/20 rounded-full px-3.5 py-1.5 text-xs font-bold tracking-wide uppercase;
+  }
+  
+  .status-in-progress {
+    @apply bg-blue-500/15 text-blue-400 border border-blue-500/20 rounded-full px-3.5 py-1.5 text-xs font-bold tracking-wide uppercase;
+  }
+  
+  .status-completed {
+    @apply bg-success-500/15 text-success-400 border border-success-500/20 rounded-full px-3.5 py-1.5 text-xs font-bold tracking-wide uppercase;
+  }
+  
+  .status-cancelled {
+    @apply bg-danger-500/15 text-danger-400 border border-danger-500/20 rounded-full px-3.5 py-1.5 text-xs font-bold tracking-wide uppercase;
+  }
+
+  /* Fancy text gradient */
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary-400 to-accent;
+  }
+
+  /* Tables for dark theme */
+  table {
+    @apply w-full;
+  }
+  th {
+    @apply text-left text-xs font-bold text-neutral-400 uppercase tracking-wider py-4 px-4 border-b border-white/[0.06];
+  }
+  td {
+    @apply py-4 px-4 text-sm text-neutral-300 border-b border-white/[0.04];
+  }
+  tr:hover td {
+    @apply bg-white/[0.02];
+  }
+}
+
+@layer utilities {
+  .animation-delay-100 {
+    animation-delay: 0.1s;
+  }
+  .animation-delay-200 {
+    animation-delay: 0.2s;
+  }
+  .animation-delay-300 {
+    animation-delay: 0.3s;
+  }
+  .animation-delay-400 {
+    animation-delay: 0.4s;
+  }
+  .animation-delay-500 {
+    animation-delay: 0.5s;
+  }
+  .animation-delay-1000 {
+    animation-delay: 1s;
+  }
+  
+  /* Premium dark scrollbar */
+  ::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.15);
+  }
+
+    /* Skeleton shimmer for loading */
+  .skeleton {
+    background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 2s linear infinite;
+  }
+}
+
+/* Custom Leaflet Dark Theme Popups */
+.leaflet-popup-content-wrapper, .leaflet-popup-tip {
+  background: #1a1a1a !important;
+  color: #e5e5e5 !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
+  border-radius: 12px !important;
+}
+
+.leaflet-popup-content {
+  margin: 12px 16px !important;
+  color: #e5e5e5 !important;
+}
+
+.leaflet-container a.leaflet-popup-close-button {
+  color: #a3a3a3 !important;
+  padding: 6px 8px 0 0 !important;
+}
+
+.leaflet-container a.leaflet-popup-close-button:hover {
+  color: #fff !important;
+}
+
+/* Accessibility overrides for illegible Tailwind dark text classes in dark mode */
+.text-green-800 {
+  color: #4ade80 !important; /* Tailwind green-400 */
+}
+.text-red-800 {
+  color: #f87171 !important; /* Tailwind red-400 */
+}
+.text-blue-800 {
+  color: #60a5fa !important; /* Tailwind blue-400 */
+}
+.text-yellow-800 {
+  color: #facc15 !important; /* Tailwind yellow-400 */
+}
+
+/* Ensure modals have solid high-contrast backgrounds and do not bleed backdrop text */
+.fixed.inset-0 .bg-white\/\[0\.05\] {
+  background-color: #121212 !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6) !important;
+}
+
+/* Premium global backdrop blur for all modal overlays */
+.fixed.inset-0[class*="bg-black"] {
+  backdrop-filter: blur(4px) !important;
+  -webkit-backdrop-filter: blur(4px) !important;
+  background-color: rgba(0, 0, 0, 0.65) !important;
+}
