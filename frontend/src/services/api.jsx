@@ -35,8 +35,9 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // Handle 401 unauthorized errors
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Handle 401 unauthorized errors (skip for auth login/refresh endpoints)
+    const isAuthRequest = originalRequest.url?.includes('/auth/login') || originalRequest.url?.includes('/auth/refresh-token');
+    if (error.response?.status === 401 && !originalRequest._retry && !isAuthRequest) {
       originalRequest._retry = true;
 
       try {
