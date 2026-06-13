@@ -1,8 +1,36 @@
 import React from "react";
+import { motion } from "framer-motion";
 
-const Logo = ({ className = "h-12 w-12", showText = false, textClass = "text-2xl font-bold", logoColorClass = "text-white" }) => {
+const Logo = ({
+  className = "h-12 w-12",
+  showText = false,
+  textClass = "text-2xl font-bold",
+  logoColorClass = "text-white",
+  onClick
+}) => {
+
+  const handleClick = (e) => {
+    if (onClick) {
+      onClick(e);
+    }
+
+    if (window.location.pathname === "/") {
+      e.preventDefault();
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+      });
+    }
+  };
+
   return (
-    <div className="flex items-center gap-3 select-none group cursor-pointer">
+    <motion.div
+      whileHover={{ scale: 1.03 }}
+      whileTap={{ scale: 0.95 }}
+      transition={{ type: "spring", stiffness: 400, damping: 17 }}
+      onClick={handleClick}
+      className="flex items-center gap-3 select-none group cursor-pointer"
+    >
       <div className={className}>
         <svg
           viewBox="0 0 120 120"
@@ -107,7 +135,7 @@ const Logo = ({ className = "h-12 w-12", showText = false, textClass = "text-2xl
           <span className="bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent">Fix</span>
         </span>
       )}
-    </div>
+    </motion.div>
   );
 };
 

@@ -19,6 +19,7 @@ import {
   SignalIcon,
   PhoneIcon,
   ChevronDownIcon,
+  MagnifyingGlassIcon,
 } from "@heroicons/react/24/outline";
 import Logo from "../../components/common/Logo";
 
@@ -159,53 +160,151 @@ const fadeIn = {
 };
 
 /* ─── Interactive Simulator Component ─────────────────────────── */
+const mockMechanics = [
+  {
+    id: "sunil",
+    name: "Sunil Verma",
+    rating: "4.9",
+    reviews: 142,
+    specialty: "Tire & Wheel Expert",
+    skills: ["tire", "flat tire", "puncture", "wheel", "alignment", "mechanic"],
+    vehicle: "Tata Winger Mobile Workshop",
+    distance: "1.8 km",
+    eta: 8,
+    color: "from-red-500 to-orange-600",
+    markerColor: "#ef4444",
+    x: 120,
+    y: 280,
+    path: "M 120 280 Q 180 220 250 200"
+  },
+  {
+    id: "amit",
+    name: "Amit Patel",
+    rating: "4.8",
+    reviews: 98,
+    specialty: "Battery & Electricals",
+    skills: ["battery", "jumpstart", "alternator", "wiring", "electrical", "mechanic"],
+    vehicle: "Maruti Eeco Mobile Unit",
+    distance: "2.4 km",
+    eta: 11,
+    color: "from-amber-500 to-yellow-600",
+    markerColor: "#f59e0b",
+    x: 380,
+    y: 120,
+    path: "M 380 120 Q 300 140 250 200"
+  },
+  {
+    id: "rajesh",
+    name: "Rajesh Kumar",
+    rating: "4.7",
+    reviews: 215,
+    specialty: "Engine & Diagnostics",
+    skills: ["engine", "smoke", "overheating", "fluid leak", "coolant", "brakes", "mechanic"],
+    vehicle: "Mahindra Bolero Workshop",
+    distance: "3.5 km",
+    eta: 15,
+    color: "from-blue-500 to-indigo-600",
+    markerColor: "#3b82f6",
+    x: 80,
+    y: 100,
+    path: "M 80 100 Q 160 130 250 200"
+  },
+  {
+    id: "vikram",
+    name: "Vikram Singh",
+    rating: "4.9",
+    reviews: 84,
+    specialty: "Key & Lockout Specialist",
+    skills: ["lockout", "keys", "door unlock", "car key", "lock", "mechanic"],
+    vehicle: "Bajaj RE Auto Repair",
+    distance: "1.2 km",
+    eta: 6,
+    color: "from-emerald-500 to-teal-600",
+    markerColor: "#10b981",
+    x: 420,
+    y: 320,
+    path: "M 420 320 Q 320 280 250 200"
+  }
+];
+
 const InteractiveSimulator = () => {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedMechanic, setSelectedMechanic] = useState(null);
+  const [hoveredMechanic, setHoveredMechanic] = useState(null);
   const [activeSim, setActiveSim] = useState(null);
   const [simStep, setSimStep] = useState(0);
   const [eta, setEta] = useState(12);
 
+  const activeMech = mockMechanics.find(m => m.id === activeSim);
+
   useEffect(() => {
     let etaInterval = null;
-    if (activeSim) {
+    let t1 = null;
+    let t2 = null;
+    let t3 = null;
+
+    if (activeSim && activeMech) {
       setSimStep(0);
-      setEta(12);
+      setEta(activeMech.eta);
       
-      // Step 1: Matching
-      const t1 = setTimeout(() => {
+      // Step 1: Request Accepted (after 1.5s)
+      t1 = setTimeout(() => {
         setSimStep(1);
       }, 1500);
 
-      // Step 2: Routing
-      const t2 = setTimeout(() => {
+      // Step 2: En Route (after 3.0s)
+      t2 = setTimeout(() => {
         setSimStep(2);
         // Countdown ETA
         etaInterval = setInterval(() => {
-          setEta(prev => (prev > 1 ? prev - 1 : 1));
-        }, 1200);
-      }, 3500);
+          setEta(prev => {
+            if (prev > 2) return prev - 2;
+            return 1;
+          });
+        }, 1000);
+      }, 3000);
 
-      // Step 3: Arrived
-      const t3 = setTimeout(() => {
+      // Step 3: Arrived (after 8.0s)
+      t3 = setTimeout(() => {
         setSimStep(3);
         setEta(0);
         if (etaInterval) clearInterval(etaInterval);
-      }, 8500);
-
-      return () => {
-        clearTimeout(t1);
-        clearTimeout(t2);
-        clearTimeout(t3);
-        if (etaInterval) clearInterval(etaInterval);
-      };
+      }, 8000);
     }
-  }, [activeSim]);
 
-  const scenarios = [
-    { id: 'flat_tire', label: 'Flat Tire Rescue', icon: <WrenchScrewdriverIcon className="h-5 w-5" />, desc: 'Spare tire installation or flat tire patch.' },
-    { id: 'dead_battery', label: 'Battery Jumpstart', icon: <BoltIcon className="h-5 w-5" />, desc: 'Dead battery jumpstart or new battery replacement.' },
-    { id: 'engine_smoke', label: 'Engine Smoke', icon: <SignalIcon className="h-5 w-5" />, desc: 'Overheated engine or fluid leak diagnosis.' },
-    { id: 'lockout', label: 'Lockout Assist', icon: <ShieldCheckIcon className="h-5 w-5" />, desc: 'Keys locked inside the vehicle or key replacement.' }
-  ];
+    return () => {
+      if (t1) clearTimeout(t1);
+      if (t2) clearTimeout(t2);
+      if (t3) clearTimeout(t3);
+      if (etaInterval) clearInterval(etaInterval);
+    };
+  }, [activeSim, activeMech]);
+
+  const filteredMechanics = mockMechanics.filter(m => {
+    const q = searchQuery.toLowerCase().trim();
+    if (!q) return true;
+    return (
+      m.name.toLowerCase().includes(q) ||
+      m.specialty.toLowerCase().includes(q) ||
+      m.skills.some(s => s.includes(q))
+    );
+  });
+
+  const handleSelectMechanic = (m) => {
+    if (activeSim) return; // Disable selection during active simulation
+    setSelectedMechanic(m);
+  };
+
+  const handleStartSim = () => {
+    if (!selectedMechanic) return;
+    setActiveSim(selectedMechanic.id);
+  };
+
+  const handleResetSim = () => {
+    setActiveSim(null);
+    setSimStep(0);
+    setSelectedMechanic(null);
+  };
 
   return (
     <section className="py-28 px-6 relative overflow-hidden bg-[#090909]/40 border-t border-b border-white/[0.04]">
@@ -217,93 +316,202 @@ const InteractiveSimulator = () => {
             Experience <span className="bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent">SnapFix Live</span>
           </h2>
           <p className="text-neutral-400 text-lg max-w-2xl mx-auto mt-4">
-            Select a roadside breakdown scenario below to see how our instant GPS dispatch and live tracking systems operate.
+            Search for verified mechanics near your location, select their profile, and watch them dispatch to you in real-time.
           </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
           {/* Controls & Logs Panel */}
-          <div className="lg:col-span-5 flex flex-col justify-between glass-panel p-8 rounded-3xl border border-white/[0.06] bg-white/[0.02]">
-            <div>
-              <h3 className="text-lg font-bold text-white mb-6">1. Choose a Scenario</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {scenarios.map(s => (
-                  <button
-                    key={s.id}
-                    onClick={() => setActiveSim(s.id)}
-                    className={`flex flex-col items-start p-5 rounded-2xl border text-left transition-all duration-300 ${
-                      activeSim === s.id
-                        ? 'border-red-500 bg-red-500/10 shadow-lg shadow-red-500/10'
-                        : 'border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.05] hover:border-white/[0.12]'
-                    }`}
-                  >
-                    <span className={`p-2 bg-white/[0.06] rounded-xl mb-3 ${activeSim === s.id ? 'text-red-400' : 'text-neutral-400'}`}>{s.icon}</span>
-                    <span className="text-sm font-bold text-white">{s.label}</span>
-                    <span className="text-xs text-neutral-500 mt-1 line-clamp-2">{s.desc}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
+          <div className="lg:col-span-5 flex flex-col justify-between glass-panel p-8 rounded-3xl border border-white/[0.06] bg-white/[0.02] min-h-[500px]">
+            {!activeSim ? (
+              <div className="flex flex-col h-full justify-between">
+                <div>
+                  <h3 className="text-lg font-bold text-white mb-4">1. Search & Select Mechanic</h3>
+                  
+                  {/* Search Field */}
+                  <div className="relative mb-6">
+                    <MagnifyingGlassIcon className="absolute left-4 top-3.5 h-5 w-5 text-neutral-500" />
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Search specialty (e.g. battery, tire, engine)..."
+                      className="w-full pl-12 pr-4 py-3.5 bg-white/[0.03] border border-white/[0.08] rounded-2xl text-white placeholder-neutral-500 focus:outline-none focus:border-red-500/50 transition-all text-sm"
+                    />
+                  </div>
 
-            {/* Simulated Timeline Logs */}
-            <div className="mt-8 border-t border-white/[0.06] pt-6">
-              <h3 className="text-xs font-bold text-neutral-500 uppercase tracking-widest mb-4">Simulation Logs</h3>
-              <div className="space-y-4">
-                {!activeSim ? (
-                  <p className="text-neutral-500 text-sm italic">Select a scenario above to start the live simulation...</p>
-                ) : (
-                  <div className="space-y-4">
-                    {/* Log 1 */}
-                    <div className="flex items-start gap-3 text-sm">
-                      <span className="text-green-500 mt-0.5">✓</span>
-                      <div>
-                        <p className="font-semibold text-white">Emergency Request Broadcasted</p>
-                        <p className="text-xs text-neutral-500">Searching coordinates within 3km radius...</p>
+                  <h4 className="text-xs font-bold text-neutral-500 uppercase tracking-widest mb-3">
+                    {searchQuery ? `Search Results (${filteredMechanics.length})` : "Verified Mechanics Near You"}
+                  </h4>
+
+                  {/* Mechanics List */}
+                  <div className="space-y-3 max-h-[240px] overflow-y-auto pr-1">
+                    {filteredMechanics.length === 0 ? (
+                      <p className="text-neutral-500 text-sm italic py-4 text-center">
+                        No mechanics found matching "{searchQuery}". Try searching "tire" or "battery".
+                      </p>
+                    ) : (
+                      filteredMechanics.map(m => (
+                        <button
+                          key={m.id}
+                          onClick={() => handleSelectMechanic(m)}
+                          onMouseEnter={() => setHoveredMechanic(m.id)}
+                          onMouseLeave={() => setHoveredMechanic(null)}
+                          className={`w-full flex items-center justify-between p-3.5 rounded-2xl border text-left transition-all duration-300 ${
+                            selectedMechanic?.id === m.id
+                              ? 'border-red-500 bg-red-500/10 shadow-lg shadow-red-500/5'
+                              : 'border-white/[0.06] bg-white/[0.01] hover:bg-white/[0.04] hover:border-white/[0.12]'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className={`w-9 h-9 rounded-full bg-gradient-to-tr ${m.color} flex items-center justify-center font-bold text-xs text-black`}>
+                              {m.name.split(" ").map(n => n[0]).join("")}
+                            </div>
+                            <div>
+                              <p className="text-sm font-bold text-white leading-tight">{m.name}</p>
+                              <p className="text-xs text-neutral-500 mt-0.5">{m.specialty}</p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-xs font-bold text-red-500">★ {m.rating}</span>
+                            <p className="text-[10px] text-neutral-500 mt-0.5">{m.distance}</p>
+                          </div>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                {/* Selected Mechanic details */}
+                <div className="mt-6 pt-6 border-t border-white/[0.06]">
+                  {selectedMechanic ? (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="space-y-4"
+                    >
+                      <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-start justify-between">
+                        <div>
+                          <p className="text-xs text-neutral-500 font-bold uppercase tracking-wider">Selected Provider</p>
+                          <h4 className="text-base font-bold text-white mt-1">{selectedMechanic.name}</h4>
+                          <p className="text-xs text-neutral-400 mt-0.5">{selectedMechanic.vehicle}</p>
+                          <p className="text-[10px] text-neutral-500 mt-2 font-medium">Reviews: {selectedMechanic.reviews} verified jobs</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs text-neutral-500 font-bold uppercase tracking-wider">Eta</p>
+                          <p className="text-lg font-black text-red-500 mt-0.5">~{selectedMechanic.eta} Mins</p>
+                          <p className="text-xs text-neutral-400 mt-0.5">{selectedMechanic.distance} away</p>
+                        </div>
                       </div>
-                    </div>
 
-                    {/* Log 2 */}
+                      <button
+                        onClick={handleStartSim}
+                        className="w-full bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-400 hover:to-orange-400 text-white font-bold py-3.5 px-6 rounded-2xl text-sm transition-all duration-300 hover:shadow-lg hover:shadow-red-500/20 hover:-translate-y-0.5 flex items-center justify-center gap-2"
+                      >
+                        <WrenchScrewdriverIcon className="h-4 w-4" />
+                        Request {selectedMechanic.name.split(" ")[0]}
+                      </button>
+                    </motion.div>
+                  ) : (
+                    <p className="text-neutral-500 text-sm italic text-center py-4">
+                      Select a nearby mechanic above to view details & dispatch...
+                    </p>
+                  )}
+                </div>
+              </div>
+            ) : (
+              // Active Simulation Logs Screen
+              <div className="flex flex-col h-full justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-lg font-bold text-white">Live Request Status</h3>
+                    <span className="px-3 py-1 bg-red-500/10 border border-red-500/20 rounded-full text-xs font-bold text-red-500 animate-pulse">
+                      Active tracking
+                    </span>
+                  </div>
+
+                  {/* Real-time Logs List */}
+                  <div className="space-y-4">
+                    {/* Log 1: Sending request */}
+                    <motion.div
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      className="flex items-start gap-3 text-sm"
+                    >
+                      <span className="text-red-500 mt-0.5">⚡</span>
+                      <div>
+                        <p className="font-semibold text-white">Sending request to {activeMech.name}</p>
+                        <p className="text-xs text-neutral-500">Contacting specific technician near your location...</p>
+                      </div>
+                    </motion.div>
+
+                    {/* Log 2: Accepted */}
                     {simStep >= 1 && (
-                      <div className="flex items-start gap-3 text-sm animate-fade-in">
+                      <motion.div
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="flex items-start gap-3 text-sm"
+                      >
                         <span className="text-green-500 mt-0.5">✓</span>
                         <div>
-                          <p className="font-semibold text-white">Mechanic Found & Dispatched</p>
-                          <div className="flex items-center gap-3 mt-2 p-2.5 bg-white/[0.04] rounded-xl border border-white/[0.05]">
-                            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-red-500 to-orange-500 flex items-center justify-center font-bold text-xs text-black">SV</div>
+                          <p className="font-semibold text-white">Request Accepted</p>
+                          <div className="flex items-center gap-3 mt-2 p-2.5 bg-white/[0.03] rounded-xl border border-white/[0.06]">
+                            <div className={`w-8 h-8 rounded-lg bg-gradient-to-tr ${activeMech.color} flex items-center justify-center font-bold text-xs text-black`}>
+                              {activeMech.name.split(" ").map(n => n[0]).join("")}
+                            </div>
                             <div>
-                              <p className="text-xs font-bold text-white">Sunil Verma (4.9 ★)</p>
-                              <p className="text-[10px] text-neutral-500 font-medium">Tata Winger Mobile Workshop</p>
+                              <p className="text-xs font-bold text-white">{activeMech.name} ({activeMech.rating} ★)</p>
+                              <p className="text-[10px] text-neutral-500 font-medium">{activeMech.vehicle}</p>
                             </div>
                           </div>
                         </div>
-                      </div>
+                      </motion.div>
                     )}
 
-                    {/* Log 3 */}
+                    {/* Log 3: En route */}
                     {simStep >= 2 && (
-                      <div className="flex items-start gap-3 text-sm animate-fade-in">
+                      <motion.div
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="flex items-start gap-3 text-sm"
+                      >
                         <span className="text-green-500 mt-0.5">✓</span>
                         <div>
-                          <p className="font-semibold text-white">Live Route Navigation Active</p>
-                          <p className="text-xs text-red-400 font-semibold mt-0.5">ETA: {eta} minutes · Live GPS tracking enabled</p>
+                          <p className="font-semibold text-white">En Route & Live GPS Active</p>
+                          <p className="text-xs text-red-400 font-semibold mt-0.5">
+                            ETA: {eta} minutes · Live routing path active
+                          </p>
                         </div>
-                      </div>
+                      </motion.div>
                     )}
 
-                    {/* Log 4 */}
+                    {/* Log 4: Arrived */}
                     {simStep === 3 && (
-                      <div className="flex items-start gap-3 text-sm animate-fade-in">
+                      <motion.div
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="flex items-start gap-3 text-sm"
+                      >
                         <span className="text-green-500 mt-0.5">🎉</span>
                         <div>
-                          <p className="font-semibold text-white">Help Arrived!</p>
-                          <p className="text-xs text-neutral-400">Mechanic has safely reached your coordinates.</p>
+                          <p className="font-semibold text-white">Help Has Arrived!</p>
+                          <p className="text-xs text-neutral-400">{activeMech.name} has safely reached your coordinates.</p>
                         </div>
-                      </div>
+                      </motion.div>
                     )}
                   </div>
-                )}
+                </div>
+
+                <div className="mt-8 pt-6 border-t border-white/[0.06]">
+                  <button
+                    onClick={handleResetSim}
+                    className="w-full bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.08] text-white font-semibold py-3 px-6 rounded-2xl text-sm transition-all duration-300"
+                  >
+                    Reset & Search Again
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Interactive Live Map Simulator */}
@@ -311,87 +519,213 @@ const InteractiveSimulator = () => {
             {/* Map Grid Background */}
             <div className="absolute inset-0 opacity-[0.03] bg-[linear-gradient(to_right,#808080_1px,transparent_1px),linear-gradient(to_bottom,#808080_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
 
-            {!activeSim ? (
-              <div className="text-center p-8 z-10">
-                <div className="w-16 h-16 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto mb-4 animate-pulse">
-                  <span className="text-2xl">🛰️</span>
-                </div>
-                <h4 className="text-lg font-bold text-white">Interactive Map Simulator</h4>
-                <p className="text-neutral-500 text-sm max-w-sm mt-2 mx-auto">
-                  Pick a breakdown category to watch the map dynamically search, match, and route the mechanic in real time.
-                </p>
-              </div>
-            ) : (
-              <div className="w-full h-full relative p-4 flex items-center justify-center">
-                <svg className="w-full h-full absolute inset-0" viewBox="0 0 500 400">
-                  <defs>
-                    <pattern id="map-grid" width="30" height="30" patternUnits="userSpaceOnUse">
-                      <path d="M 30 0 L 0 0 0 30" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="0.5" />
-                    </pattern>
-                  </defs>
-                  <rect width="500" height="400" fill="url(#map-grid)" />
+            {/* SVG Interactive Map */}
+            <div className="w-full h-full relative p-4 flex items-center justify-center">
+              <svg className="w-full h-full absolute inset-0" viewBox="0 0 500 400">
+                <defs>
+                  <pattern id="map-grid" width="30" height="30" patternUnits="userSpaceOnUse">
+                    <path d="M 30 0 L 0 0 0 30" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="0.5" />
+                  </pattern>
+                  {/* Subtle shadows for markers */}
+                  <filter id="marker-shadow" x="-30%" y="-30%" width="160%" height="160%">
+                    <feDropShadow dx="0" dy="4" stdDeviation="4" floodColor="#000" floodOpacity="0.4" />
+                  </filter>
+                  {/* Define paths statically so <animateMotion> can reference them safely */}
+                  {mockMechanics.map(m => (
+                    <path key={m.id} id={`route-path-${m.id}`} d={m.path} fill="none" />
+                  ))}
+                </defs>
+                
+                {/* Grid */}
+                <rect width="500" height="400" fill="url(#map-grid)" />
 
-                  {/* Search Radius Animation in Step 0 */}
-                  {simStep === 0 && (
-                    <circle cx="250" cy="200" r="10" fill="#ef4444" opacity="0.3">
-                      <animate attributeName="r" values="10;140;10" dur="2s" repeatCount="indefinite" />
-                      <animate attributeName="opacity" values="0.6;0;0.6" dur="2s" repeatCount="indefinite" />
-                    </circle>
-                  )}
+                {/* Draw Route Path if simulation is active (step >= 2) */}
+                {activeSim && simStep >= 2 && (
+                  <motion.path
+                    id={`route-path-${activeSim}`}
+                    d={activeMech.path}
+                    stroke={activeMech.markerColor}
+                    strokeWidth="3.5"
+                    strokeDasharray="8 6"
+                    fill="none"
+                    initial={{ pathLength: 0 }}
+                    animate={{ pathLength: 1 }}
+                    transition={{ duration: 0.8, ease: "easeOut" }}
+                  />
+                )}
 
-                  {/* Route path */}
-                  {simStep >= 2 && (
-                    <path
-                      d="M 120 280 Q 200 120 250 200"
-                      stroke="#ef4444"
-                      strokeWidth="3.5"
-                      strokeDasharray="8 6"
-                      fill="none"
-                    >
-                      <animate attributeName="stroke-dashoffset" values="100;0" dur="15s" repeatCount="indefinite" />
-                    </path>
-                  )}
+                {/* Radar ripple on dispatch request (Step 0) */}
+                {activeSim && simStep === 0 && (
+                  <circle cx="250" cy="200" r="10" fill={activeMech.markerColor} opacity="0.3">
+                    <animate attributeName="r" values="10;140;10" dur="2s" repeatCount="indefinite" />
+                    <animate attributeName="opacity" values="0.6;0;0.6" dur="2s" repeatCount="indefinite" />
+                  </circle>
+                )}
 
-                  {/* User Car Marker */}
-                  <g transform="translate(250, 200)">
-                    <circle cx="0" cy="0" r="24" fill="#10b981" opacity="0.15" className="animate-pulse" />
-                    <circle cx="0" cy="0" r="9" fill="#10b981" />
-                    <text y="-28" textAnchor="middle" fill="#10b981" fontSize="10" fontWeight="800" letterSpacing="0.05em">YOUR CAR</text>
+                {/* User Car Marker (Static Center) */}
+                <g transform="translate(250, 200)" filter="url(#marker-shadow)">
+                  <circle cx="0" cy="0" r="24" fill="#10b981" opacity="0.12" className="animate-pulse" />
+                  <circle cx="0" cy="0" r="9" fill="#10b981" />
+                  <circle cx="0" cy="0" r="4" fill="#fff" />
+                  <text y="-28" textAnchor="middle" fill="#10b981" fontSize="9" fontWeight="800" letterSpacing="0.1em" className="select-none">YOUR CAR</text>
+                </g>
+
+                {/* Interactive/Searchable Mechanics Pins (Only shown when simulator is not running) */}
+                {!activeSim && (
+                  filteredMechanics.map(m => {
+                    const isSelected = selectedMechanic?.id === m.id;
+                    const isHovered = hoveredMechanic === m.id;
+                    const scale = isSelected ? 1.3 : isHovered ? 1.15 : 1.0;
+                    return (
+                      <g
+                        key={m.id}
+                        transform={`translate(${m.x}, ${m.y})`}
+                        onClick={() => handleSelectMechanic(m)}
+                        className="cursor-pointer group"
+                        filter="url(#marker-shadow)"
+                        style={{ transition: "all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)" }}
+                      >
+                        <g transform={`scale(${scale})`}>
+                          <circle
+                            cx="0"
+                            cy="0"
+                            r={isSelected ? "18" : "14"}
+                            fill={m.markerColor}
+                            opacity={isSelected ? "0.2" : "0.15"}
+                            className="group-hover:scale-125 transition-transform"
+                          />
+                          <circle cx="0" cy="0" r="8" fill={m.markerColor} />
+                          <circle cx="0" cy="0" r="3" fill="#fff" />
+                        </g>
+                        <text
+                          y="-20"
+                          textAnchor="middle"
+                          fill={isSelected ? "#fff" : "#a3a3a3"}
+                          fontSize="9"
+                          fontWeight={isSelected ? "800" : "500"}
+                          className="select-none pointer-events-none transition-colors"
+                        >
+                          {m.name.split(" ")[0]}
+                        </text>
+                      </g>
+                    );
+                  })
+                )}
+
+                {/* Simulating Mechanic Travel marker */}
+                {activeSim && simStep >= 1 && (
+                  <g>
+                    {simStep === 1 && (
+                      // Static start position
+                      <g transform={`translate(${activeMech.x}, ${activeMech.y})`}>
+                        {/* Vehicle Shape */}
+                        <g transform="translate(-15, -8)">
+                          <rect x="2" y="2" width="22" height="10" rx="2" fill={activeMech.markerColor} />
+                          <path d="M 24 2 L 28 6 L 28 12 L 24 12 Z" fill={activeMech.markerColor} />
+                          <rect x="18" y="4" width="5" height="3" rx="0.5" fill="#090909" />
+                          <rect x="10" y="4" width="6" height="3" rx="0.5" fill="#090909" />
+                          <circle cx="7" cy="13" r="3" fill="#121212" />
+                          <circle cx="19" cy="13" r="3" fill="#121212" />
+                          <circle cx="7" cy="13" r="1.2" fill="#fff" />
+                          <circle cx="19" cy="13" r="1.2" fill="#fff" />
+                        </g>
+                        {/* Label */}
+                        <g transform="translate(0, -22)">
+                          <rect x="-24" y="-8" width="48" height="14" rx="4" fill="#121212" stroke={activeMech.markerColor} strokeWidth="1" opacity="0.95" />
+                          <text textAnchor="middle" y="2" fill="#fff" fontSize="8" fontWeight="800" className="select-none">
+                            {activeMech.name.split(" ")[0]}
+                          </text>
+                        </g>
+                      </g>
+                    )}
+
+                    {simStep === 2 && (
+                      // Animate along route path
+                      <g>
+                        {/* 1. Rotating Vehicle group */}
+                        <g filter="url(#marker-shadow)">
+                          <g transform="translate(-15, -8)">
+                            <rect x="2" y="3" width="22" height="10" rx="2" fill="#000" opacity="0.3" filter="blur(1px)" />
+                            <rect x="2" y="2" width="22" height="10" rx="2" fill={activeMech.markerColor} />
+                            <path d="M 24 2 L 28 6 L 28 12 L 24 12 Z" fill={activeMech.markerColor} />
+                            <rect x="18" y="4" width="5" height="3" rx="0.5" fill="#090909" />
+                            <rect x="10" y="4" width="6" height="3" rx="0.5" fill="#090909" />
+                            <circle cx="7" cy="13" r="3" fill="#121212" />
+                            <circle cx="19" cy="13" r="3" fill="#121212" />
+                            <circle cx="7" cy="13" r="1.2" fill="#fff" />
+                            <circle cx="19" cy="13" r="1.2" fill="#fff" />
+                          </g>
+                          <animateMotion dur="5s" fill="freeze" rotate="auto" key={`veh-${activeSim}`}>
+                            <mpath href={`#route-path-${activeSim}`} />
+                          </animateMotion>
+                        </g>
+
+                        {/* 2. Non-rotating Label group (keeps text perfectly horizontal) */}
+                        <g>
+                          <g transform="translate(0, -22)">
+                            <rect x="-24" y="-8" width="48" height="14" rx="4" fill="#121212" stroke={activeMech.markerColor} strokeWidth="1" opacity="0.95" />
+                            <text textAnchor="middle" y="2" fill="#fff" fontSize="8" fontWeight="800" className="select-none">
+                              {activeMech.name.split(" ")[0]}
+                            </text>
+                          </g>
+                          <animateMotion dur="5s" fill="freeze" key={`lbl-${activeSim}`}>
+                            <mpath href={`#route-path-${activeSim}`} />
+                          </animateMotion>
+                        </g>
+                      </g>
+                    )}
+
+                    {simStep === 3 && (
+                      // Arrived at customer location
+                      <g>
+                        {/* Arrived badge */}
+                        <g transform="translate(250, 200)" filter="url(#marker-shadow)">
+                          <circle cx="0" cy="0" r="28" fill={activeMech.markerColor} opacity="0.2" className="animate-pulse" />
+                          <circle cx="0" cy="0" r="10" fill={activeMech.markerColor} />
+                          <circle cx="0" cy="0" r="4" fill="#fff" />
+                          <text y="34" textAnchor="middle" fill={activeMech.markerColor} fontSize="10" fontWeight="900" letterSpacing="0.05em" className="select-none">
+                            ARRIVED
+                          </text>
+                        </g>
+                        {/* Parked Van next to user car */}
+                        <g transform="translate(220, 202)">
+                          <g transform="translate(-15, -8)">
+                            <rect x="2" y="2" width="22" height="10" rx="2" fill={activeMech.markerColor} />
+                            <path d="M 24 2 L 28 6 L 28 12 L 24 12 Z" fill={activeMech.markerColor} />
+                            <rect x="18" y="4" width="5" height="3" rx="0.5" fill="#090909" />
+                            <rect x="10" y="4" width="6" height="3" rx="0.5" fill="#090909" />
+                            <circle cx="7" cy="13" r="3" fill="#121212" />
+                            <circle cx="19" cy="13" r="3" fill="#121212" />
+                            <circle cx="7" cy="13" r="1.2" fill="#fff" />
+                            <circle cx="19" cy="13" r="1.2" fill="#fff" />
+                          </g>
+                        </g>
+                      </g>
+                    )}
                   </g>
+                )}
+              </svg>
 
-                  {/* Mechanic Marker */}
-                  {simStep >= 1 && (
-                    <g 
-                      transform={simStep === 3 ? "translate(250, 200)" : "translate(120, 280)"}
-                      style={{ transition: 'transform 5s cubic-bezier(0.25, 0.46, 0.45, 0.94)' }}
-                    >
-                      <circle cx="0" cy="0" r="24" fill="#ef4444" opacity="0.15" />
-                      <circle cx="0" cy="0" r="9" fill="#ef4444" />
-                      <text y="-28" textAnchor="middle" fill="#ef4444" fontSize="10" fontWeight="800" letterSpacing="0.05em">MECHANIC</text>
-                    </g>
-                  )}
-                </svg>
-
-                {/* Live Status Overlay */}
-                <div className="absolute top-6 left-6 right-6 bg-[#121212]/95 backdrop-blur-md border border-white/[0.08] p-5 rounded-2xl flex items-center justify-between shadow-2xl">
-                  <div>
-                    <p className="text-[10px] text-neutral-500 uppercase tracking-widest font-bold">Dispatch Status</p>
-                    <p className="text-sm font-bold text-white mt-1">
-                      {simStep === 0 && 'Searching for nearest mechanics...'}
-                      {simStep === 1 && 'Connecting Sunil Verma...'}
-                      {simStep === 2 && 'En Route to your coordinates'}
-                      {simStep === 3 && 'Help has arrived at scene'}
-                    </p>
-                  </div>
-                  {simStep >= 2 && (
-                    <div className="text-right">
-                      <p className="text-[10px] text-neutral-500 uppercase tracking-widest font-bold">Estimated Arrival</p>
-                      <p className="text-sm font-black text-red-400 mt-1">{eta > 0 ? `${eta} mins` : 'Arrived'}</p>
-                    </div>
-                  )}
+              {/* Status Overlay */}
+              <div className="absolute top-6 left-6 right-6 bg-[#121212]/95 backdrop-blur-md border border-white/[0.08] p-5 rounded-2xl flex items-center justify-between shadow-2xl">
+                <div>
+                  <p className="text-[10px] text-neutral-500 uppercase tracking-widest font-bold">Simulator Map</p>
+                  <h4 className="text-sm font-bold text-white mt-1">
+                    {!activeSim && (selectedMechanic ? `Ready to request ${selectedMechanic.name}` : 'Select a provider on map or list')}
+                    {activeSim && simStep === 0 && `Broadcasting request to ${activeMech.name}...`}
+                    {activeSim && simStep === 1 && `Waiting for ${activeMech.name} to accept...`}
+                    {activeSim && simStep === 2 && `${activeMech.name} is en route`}
+                    {activeSim && simStep === 3 && `${activeMech.name} arrived at your location`}
+                  </h4>
                 </div>
+                {activeSim && simStep >= 2 && (
+                  <div className="text-right">
+                    <p className="text-[10px] text-neutral-500 uppercase tracking-widest font-bold">Live ETA</p>
+                    <p className="text-sm font-black text-red-500 mt-1">{eta > 0 ? `${eta} mins` : 'Arrived'}</p>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
           </div>
         </div>
       </div>
