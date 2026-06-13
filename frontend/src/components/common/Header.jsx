@@ -3,7 +3,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { UserCircleIcon } from "@heroicons/react/24/outline";
 import { motion, AnimatePresence } from "framer-motion";
 
-const Header = () => {
+const Header = ({ onMenuClick }) => {
   const { user, logout } = useAuth();
   const [showDropdown, setShowDropdown] = useState(false);
 
@@ -14,15 +14,34 @@ const Header = () => {
 
   return (
     <header className="bg-[#111111]/80 backdrop-blur-xl border-b border-white/[0.06] sticky top-0 z-30">
-      <div className="px-8 h-20 flex items-center justify-between">
-        {/* Left Side: Welcome */}
-        <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">
-            Welcome back, {user?.name?.split(" ")[0] || "User"}! 👋
-          </h1>
-          <p className="text-sm font-medium text-neutral-500 capitalize mt-1">
-            {user?.role} Dashboard
-          </p>
+      <div className="px-4 sm:px-8 h-20 flex items-center justify-between">
+        {/* Left Side: Mobile Menu Toggle & Welcome */}
+        <div className="flex items-center gap-3 min-w-0">
+          <button
+            onClick={onMenuClick}
+            className="p-2 -ml-2 text-neutral-400 hover:text-white lg:hidden focus:outline-none flex-shrink-0"
+            aria-label="Open sidebar"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+
+          <div className="min-w-0">
+            <h1 className="text-lg sm:text-2xl font-bold text-white tracking-tight truncate">
+              Welcome back, {user?.name?.split(" ")[0] || "User"}! 👋
+            </h1>
+            <p className="text-xs sm:text-sm font-medium text-neutral-500 capitalize mt-0.5 sm:mt-1">
+              {user?.role} Dashboard
+            </p>
+          </div>
         </div>
 
         {/* Right Side: Actions & Profile */}

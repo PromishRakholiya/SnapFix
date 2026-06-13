@@ -78,9 +78,12 @@ const PaymentHistory = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-white">Payment History</h1>
-        <CreditCardIcon className="h-8 w-8 text-primary-400" />
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-white">Payment History</h1>
+          <p className="text-neutral-400 text-sm mt-0.5">Track all your past transactions</p>
+        </div>
+        <CreditCardIcon className="h-8 w-8 text-primary-400 flex-shrink-0" />
       </div>
 
       {/* Filters */}
@@ -147,7 +150,7 @@ const PaymentHistory = () => {
             <p className="text-neutral-500">No payment history found</p>
           </div>
         ) : (
-          <div className="overflow-hidden">
+          <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-white/[0.06]">
               <thead className="bg-white/[0.03]">
                 <tr>

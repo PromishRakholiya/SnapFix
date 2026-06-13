@@ -297,7 +297,7 @@ const MechanicDiscovery = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-white">Find Mechanics</h1>
           <p className="text-neutral-400">
@@ -313,7 +313,7 @@ const MechanicDiscovery = () => {
             </p>
           )}
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
           <Button
             variant={viewMode === "card" ? "primary" : "secondary"}
             onClick={() => setViewMode("card")}
@@ -334,9 +334,9 @@ const MechanicDiscovery = () => {
       {/* Filters */}
       <div className="bg-white/[0.05] rounded-2xl shadow p-4">
         {/* Compact Filter Row */}
-        <div className="flex gap-3 items-end flex-wrap">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:gap-3 items-end">
           {/* Search Field */}
-          <div className="flex-1 min-w-80">
+          <div className="lg:flex-1 lg:min-w-60">
             <div className="relative">
               <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-primary-400" />
               <input
@@ -350,7 +350,7 @@ const MechanicDiscovery = () => {
           </div>
 
           {/* Rating Dropdown */}
-          <div className="w-40">
+          <div className="w-full sm:w-auto">
             <select
               value={pendingFilters.rating}
               onChange={(e) => handleFilterChange("rating", e.target.value)}
@@ -364,7 +364,7 @@ const MechanicDiscovery = () => {
           </div>
 
           {/* Distance Dropdown */}
-          <div className="w-40">
+          <div className="w-full sm:w-auto">
             <select
               value={pendingFilters.distance}
               onChange={(e) => handleFilterChange("distance", e.target.value)}
@@ -380,7 +380,7 @@ const MechanicDiscovery = () => {
           </div>
 
           {/* Sort By Dropdown */}
-          <div className="w-40">
+          <div className="w-full sm:w-auto">
             <select
               value={pendingFilters.sortBy}
               onChange={(e) => handleFilterChange("sortBy", e.target.value)}
@@ -393,41 +393,44 @@ const MechanicDiscovery = () => {
             </select>
           </div>
 
-          {/* Search Button */}
-          <button
-            onClick={applySearch}
-            disabled={loading}
-            className="px-6 py-3 bg-primary-500 hover:bg-primary-600 text-white font-bold rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Search
-          </button>
+          {/* Buttons row */}
+          <div className="flex gap-2 col-span-full sm:col-span-2 lg:col-span-auto">
+            {/* Search Button */}
+            <button
+              onClick={applySearch}
+              disabled={loading}
+              className="flex-1 lg:flex-none px-6 py-3 bg-primary-500 hover:bg-primary-600 text-white font-bold rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Search
+            </button>
 
-          {/* Apply Filter Button */}
-          <button
-            onClick={async () => {
-              try {
-                const newFilters = { ...pendingFilters };
-                console.log("Applying filters:", newFilters);
+            {/* Apply Filter Button */}
+            <button
+              onClick={async () => {
+                try {
+                  const newFilters = { ...pendingFilters };
+                  console.log("Applying filters:", newFilters);
 
-                setFilters(newFilters);
-                const queryParams = new URLSearchParams();
-                if (newFilters.rating)
-                  queryParams.set("rating", newFilters.rating);
-                if (newFilters.distance)
-                  queryParams.set("distance", newFilters.distance);
-                if (newFilters.sortBy)
-                  queryParams.set("sortBy", newFilters.sortBy);
-                navigate(`/customer/mechanics?${queryParams.toString()}`);
-                await fetchMechanics(newFilters);
-              } catch (error) {
-                console.error("Error applying filters:", error);
-              }
-            }}
-            disabled={loading}
-            className="px-6 py-3 bg-accent hover:bg-accent-600 text-white font-bold rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Apply
-          </button>
+                  setFilters(newFilters);
+                  const queryParams = new URLSearchParams();
+                  if (newFilters.rating)
+                    queryParams.set("rating", newFilters.rating);
+                  if (newFilters.distance)
+                    queryParams.set("distance", newFilters.distance);
+                  if (newFilters.sortBy)
+                    queryParams.set("sortBy", newFilters.sortBy);
+                  navigate(`/customer/mechanics?${queryParams.toString()}`);
+                  await fetchMechanics(newFilters);
+                } catch (error) {
+                  console.error("Error applying filters:", error);
+                }
+              }}
+              disabled={loading}
+              className="flex-1 lg:flex-none px-6 py-3 bg-accent hover:bg-accent-600 text-white font-bold rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Apply
+            </button>
+          </div>
         </div>
       </div>
 

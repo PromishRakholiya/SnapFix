@@ -204,12 +204,12 @@ const UserManagement = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white">User Management</h1>
           <p className="text-neutral-400">Manage all users on the platform</p>
         </div>
-        <div className="flex space-x-2">
+        <div className="flex flex-wrap gap-2">
           {selectedUsers.length > 0 && (
             <>
               <Button
@@ -456,7 +456,7 @@ const UserManagement = () => {
         {/* Pagination */}
         {pagination.totalPages > 1 && (
           <div className="px-6 py-4 border-t border-white/[0.08]">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div className="text-sm text-neutral-300">
                 Showing {(pagination.page - 1) * pagination.limit + 1} to{" "}
                 {Math.min(
@@ -465,7 +465,7 @@ const UserManagement = () => {
                 )}{" "}
                 of {pagination.totalItems} results
               </div>
-              <div className="flex space-x-2">
+              <div className="flex gap-2">
                 <Button
                   variant="secondary"
                   onClick={() =>

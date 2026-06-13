@@ -165,18 +165,18 @@ const Analytics = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white">Analytics Dashboard</h1>
           <p className="text-neutral-400">
             Monitor key metrics and performance indicators
           </p>
         </div>
-        <div className="flex items-center space-x-4">
+        <div className="flex flex-wrap items-center gap-3">
           <Select
             value={period}
             onChange={(e) => setPeriod(e.target.value)}
-            className="w-32"
+            className="w-36"
           >
             <option value="7d">Last 7 days</option>
             <option value="30d">Last 30 days</option>

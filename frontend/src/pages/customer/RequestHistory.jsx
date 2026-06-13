@@ -269,7 +269,7 @@ const RequestHistory = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-white">Request History</h1>
           <p className="text-neutral-400">
@@ -414,185 +414,145 @@ const RequestHistory = () => {
         ) : (
           <div className="divide-y divide-white/[0.06]">
             {requests.map((request) => (
-              <div key={request._id} className="p-6 hover:bg-white/[0.03] transition-colors">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4 flex-1">
-                    {getStatusIcon(request.status)}
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-2">
-                        <h3 className="text-lg font-medium text-white">
-                          {ISSUE_TYPE_LABELS[request.issueType] || request.issueType}
-                        </h3>
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(request.status)}`}>
-                          {request.status === 'completed' && request.paymentStatus === 'paid' ? 'Completed with Payment' : REQUEST_STATUS_LABELS[request.status]}
-                        </span>
-                      </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-neutral-400">
-                        <div className="flex items-center">
-                          <MapPinIcon className="h-4 w-4 mr-1" />
-                          {request.location.address || 'Location provided'}
-                        </div>
-                        <div>
-                          <strong>Vehicle:</strong> {request.vehicleInfo.model} ({request.vehicleInfo.plate})
-                        </div>
-                        <div>
-                          <strong>Created:</strong> {getRelativeTime(request.createdAt)}
-                        </div>
-                        {request.userExpectedPrice > 0 && (
-                          <div>
-                            <strong>Your Expected Price:</strong> ₹{request.userExpectedPrice}
-                          </div>
-                        )}
-                      </div>
+              <div key={request._id} className="p-4 sm:p-6 hover:bg-white/[0.03] transition-colors">
+                {/* Top row: status badge + title */}
+                <div className="flex flex-wrap items-center gap-2 mb-3">
+                  {getStatusIcon(request.status)}
+                  <h3 className="text-base sm:text-lg font-semibold text-white flex-1 min-w-0 truncate">
+                    {ISSUE_TYPE_LABELS[request.issueType] || request.issueType}
+                  </h3>
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium flex-shrink-0 ${getStatusColor(request.status)}`}>
+                    {request.status === 'completed' && request.paymentStatus === 'paid' ? 'Paid' : REQUEST_STATUS_LABELS[request.status]}
+                  </span>
+                </div>
 
-                      {request.description && (
-                        <p className="text-sm text-neutral-400 mt-2 line-clamp-2">
-                          {request.description}
+                {/* Details grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-neutral-400 mb-3">
+                  <div className="flex items-center gap-1">
+                    <MapPinIcon className="h-4 w-4 flex-shrink-0" />
+                    <span className="truncate">{request.location.address || 'Location provided'}</span>
+                  </div>
+                  <div>
+                    <strong>Vehicle:</strong> {request.vehicleInfo.model} ({request.vehicleInfo.plate})
+                  </div>
+                  <div>
+                    <strong>Created:</strong> {getRelativeTime(request.createdAt)}
+                  </div>
+                  {request.userExpectedPrice > 0 && (
+                    <div>
+                      <strong>Expected:</strong> ₹{request.userExpectedPrice}
+                    </div>
+                  )}
+                </div>
+
+                {request.description && (
+                  <p className="text-sm text-neutral-400 mb-3 line-clamp-2">{request.description}</p>
+                )}
+
+                {getMechanicInfo(request) && (
+                  <div className="mb-3 p-3 bg-white/[0.03] rounded-2xl">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <p className="text-sm font-medium text-white">
+                          Assigned to: {getMechanicInfo(request)?.name || 'Mechanic'}
                         </p>
-                      )}
-
-                      {getMechanicInfo(request) && (
-                        <div className="mt-3 p-3 bg-white/[0.03] rounded-2xl">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <p className="text-sm font-medium text-white">
-                                Assigned to: {getMechanicInfo(request)?.name || 'Mechanic'}
-                              </p>
-                              <p className="text-xs text-neutral-400">
-                                ⭐ {getMechanicInfo(request)?.rating?.toFixed(1) || 'New'} • {getMechanicInfo(request)?.phone || 'Contact available'}
-                              </p>
-                            </div>
-                            {request.quotation && (
-                              <div className="text-right">
-                                <p className="text-sm font-medium text-white">
-                                  {formatCurrency(request.quotation)}
-                                </p>
-                                <p className="text-xs text-neutral-400">Estimated cost</p>
-                              </div>
-                            )}
-                          </div>
+                        <p className="text-xs text-neutral-400">
+                          ⭐ {getMechanicInfo(request)?.rating?.toFixed(1) || 'New'} • {getMechanicInfo(request)?.phone || 'Contact available'}
+                        </p>
+                      </div>
+                      {request.quotation && (
+                        <div className="text-right">
+                          <p className="text-sm font-medium text-white">{formatCurrency(request.quotation)}</p>
+                          <p className="text-xs text-neutral-400">Estimated cost</p>
                         </div>
                       )}
                     </div>
                   </div>
+                )}
 
-                  <div className="flex flex-col space-y-2 ml-6">
-                    {request.status === 'offered' && (
-                      <div className="flex flex-col space-y-2">
-                        <Button
-                          variant="success"
-                          size="sm"
-                          onClick={async () => {
-                            try {
-                              const response = await requestService.confirmRequestPrice(request._id);
-                              if (response.success) {
-                                toast.success('Offer accepted! Mechanic is now assigned.');
-                                fetchRequests();
-                              }
-                            } catch (error) {
-                              toast.error(error.message || 'Failed to accept offer');
-                            }
-                          }}
-                        >
-                          Accept Offer (₹{request.mechanicOfferPrice})
-                        </Button>
-                        <Button
-                          variant="outline-danger"
-                          size="sm"
-                          onClick={async () => {
-                            const reason = window.prompt('Please enter a reason for cancellation:');
-                            if (reason !== null) {
-                              try {
-                                const response = await requestService.cancelRequest(request._id, reason);
-                                if (response.success) {
-                                  toast.success('Request cancelled');
-                                  fetchRequests();
-                                }
-                              } catch (error) {
-                                toast.error(error.message || 'Failed to cancel request');
-                              }
-                            }
-                          }}
-                        >
-                          Cancel Request
-                        </Button>
-                      </div>
-                    )}
-
-                    {canTrack(request.status) && (
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        onClick={() => handleTrackRequest(request)}
-                        icon={<EyeIcon className="h-4 w-4" />}
-                      >
-                        Track Live
-                      </Button>
-                    )}
-
-                    {canDelete(request) && (
-                      <Button
-                        variant="danger"
-                        size="sm"
-                        onClick={() => handleDeleteRequest(request._id)}
-                        icon={<TrashIcon className="h-4 w-4" />}
-                      >
-                        Delete Request
-                      </Button>
-                    )}
-                    
-                    
-                    {canReview(request) && (
-                      <Button
-                        variant="warning"
-                        size="sm"
-                        onClick={() => handleReview(request)}
-                        icon={<StarIcon className="h-4 w-4" />}
-                      >
-                        Add Review
-                      </Button>
-                    )}
-
-                    {request.reviewId && (
-                      <div className="flex items-center text-success-400 text-sm">
-                        <StarIcon className="h-4 w-4 mr-1" />
-                        Reviewed
-                      </div>
-                    )}
-
-                    {canChat(request) && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleStartChat(request)}
-                        icon={<ChatBubbleLeftIcon className="h-4 w-4" />}
-                      >
-                        Chat
-                      </Button>
-                    )}
-
-                    {/* Demo Payment Button for completed requests */}
-                    {canPay(request) && (
+                {/* Action buttons - wrap on mobile */}
+                <div className="flex flex-wrap gap-2">
+                  {request.status === 'offered' && (
+                    <>
                       <Button
                         variant="success"
                         size="sm"
-                        onClick={() => handlePayment(request)}
-                        icon={<CreditCardIcon className="h-4 w-4" />}
+                        onClick={async () => {
+                          try {
+                            const response = await requestService.confirmRequestPrice(request._id);
+                            if (response.success) {
+                              toast.success('Offer accepted! Mechanic is now assigned.');
+                              fetchRequests();
+                            }
+                          } catch (error) {
+                            toast.error(error.message || 'Failed to accept offer');
+                          }
+                        }}
                       >
-                        Payment
+                        Accept Offer (₹{request.mechanicOfferPrice})
                       </Button>
-                    )}
-                    
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleTrackRequest(request)}
-                      icon={<EyeIcon className="h-4 w-4" />}
-                    >
-                      View Details
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        onClick={async () => {
+                          const reason = window.prompt('Please enter a reason for cancellation:');
+                          if (reason !== null) {
+                            try {
+                              const response = await requestService.cancelRequest(request._id, reason);
+                              if (response.success) {
+                                toast.success('Request cancelled');
+                                fetchRequests();
+                              }
+                            } catch (error) {
+                              toast.error(error.message || 'Failed to cancel request');
+                            }
+                          }
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    </>
+                  )}
+
+                  {canTrack(request.status) && (
+                    <Button variant="primary" size="sm" onClick={() => handleTrackRequest(request)} icon={<EyeIcon className="h-4 w-4" />}>
+                      Track Live
                     </Button>
-                  </div>
+                  )}
+
+                  <Button variant="outline" size="sm" onClick={() => handleTrackRequest(request)} icon={<EyeIcon className="h-4 w-4" />}>
+                    Details
+                  </Button>
+
+                  {canChat(request) && (
+                    <Button variant="outline" size="sm" onClick={() => handleStartChat(request)} icon={<ChatBubbleLeftIcon className="h-4 w-4" />}>
+                      Chat
+                    </Button>
+                  )}
+
+                  {canPay(request) && (
+                    <Button variant="success" size="sm" onClick={() => handlePayment(request)} icon={<CreditCardIcon className="h-4 w-4" />}>
+                      Pay
+                    </Button>
+                  )}
+
+                  {canReview(request) && (
+                    <Button variant="warning" size="sm" onClick={() => handleReview(request)} icon={<StarIcon className="h-4 w-4" />}>
+                      Review
+                    </Button>
+                  )}
+
+                  {request.reviewId && (
+                    <span className="flex items-center text-success-400 text-xs gap-1 px-2 py-1 bg-success-500/10 rounded-lg">
+                      <StarIcon className="h-4 w-4" /> Reviewed
+                    </span>
+                  )}
+
+                  {canDelete(request) && (
+                    <Button variant="danger" size="sm" onClick={() => handleDeleteRequest(request._id)} icon={<TrashIcon className="h-4 w-4" />}>
+                      Delete
+                    </Button>
+                  )}
                 </div>
               </div>
             ))}

@@ -197,7 +197,7 @@ const Profile = () => {
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <h1 className="text-2xl font-bold text-white">Mechanic Profile</h1>
         {!editing && (
           <Button
@@ -215,12 +215,12 @@ const Profile = () => {
         <div className="lg:col-span-2 space-y-6">
           {/* Basic Information */}
           <div className="bg-white/[0.05] rounded-2xl shadow-soft border p-6">
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
               <h2 className="text-lg font-semibold text-white">
                 Basic Information
               </h2>
               {editing && (
-                <div className="flex space-x-2">
+                <div className="flex gap-2">
                   <Button
                     variant="secondary"
                     onClick={() => setEditing(false)}

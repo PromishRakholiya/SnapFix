@@ -201,16 +201,16 @@ const AssignedRequests = () => {
     <>
       <div className="max-w-6xl mx-auto">
         <div className="bg-white/[0.05] rounded-2xl shadow-card p-6">
-          <div className="flex justify-between items-center mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <h1 className="text-2xl font-bold text-white">Service Requests</h1>
-            <div className="flex gap-4">
+            <div className="flex flex-wrap gap-3">
               <select
                 value={filters.status}
                 onChange={(e) => handleFilterChange("status", e.target.value)}
-                className="px-3 py-2 border border-white/[0.1] rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="flex-1 sm:flex-none px-3 py-2 border border-white/[0.1] rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
                 <option value="">All Requests</option>
-                <option value="pending">Available & Pending</option>
+                <option value="pending">Available &amp; Pending</option>
                 <option value="assigned">Assigned</option>
                 <option value="enroute">En Route</option>
                 <option value="in_progress">In Progress</option>
@@ -222,7 +222,7 @@ const AssignedRequests = () => {
                 placeholder="Search requests..."
                 value={filters.search}
                 onChange={(e) => handleFilterChange("search", e.target.value)}
-                className="px-3 py-2 border border-white/[0.1] rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="flex-1 sm:flex-none px-3 py-2 border border-white/[0.1] rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
             </div>
           </div>
@@ -245,7 +245,7 @@ const AssignedRequests = () => {
                   key={request._id}
                   className="border border-white/[0.08] rounded-2xl p-4 hover:shadow-md transition-shadow"
                 >
-                  <div className="flex justify-between items-start">
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
                         <span
@@ -305,7 +305,7 @@ const AssignedRequests = () => {
                       </div>
                     </div>
 
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2 mt-3 sm:mt-0">
                       <Button
                         variant="outline"
                         size="sm"

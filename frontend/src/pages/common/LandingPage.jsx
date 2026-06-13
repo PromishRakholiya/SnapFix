@@ -322,7 +322,7 @@ const InteractiveSimulator = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
           {/* Controls & Logs Panel */}
-          <div className="lg:col-span-5 flex flex-col justify-between glass-panel p-8 rounded-3xl border border-white/[0.06] bg-white/[0.02] min-h-[500px]">
+          <div className="lg:col-span-5 flex flex-col justify-between glass-panel p-5 sm:p-8 rounded-3xl border border-white/[0.06] bg-white/[0.02] min-h-[500px]">
             {!activeSim ? (
               <div className="flex flex-col h-full justify-between">
                 <div>
@@ -515,7 +515,7 @@ const InteractiveSimulator = () => {
           </div>
 
           {/* Interactive Live Map Simulator */}
-          <div className="lg:col-span-7 h-[500px] relative rounded-3xl overflow-hidden border border-white/[0.06] bg-[#0c0c0c] shadow-2xl flex items-center justify-center">
+          <div className="lg:col-span-7 w-full aspect-[5/4] lg:aspect-auto lg:h-[500px] relative rounded-3xl overflow-hidden border border-white/[0.06] bg-[#0c0c0c] shadow-2xl flex items-center justify-center">
             {/* Map Grid Background */}
             <div className="absolute inset-0 opacity-[0.03] bg-[linear-gradient(to_right,#808080_1px,transparent_1px),linear-gradient(to_bottom,#808080_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
 
@@ -707,10 +707,10 @@ const InteractiveSimulator = () => {
               </svg>
 
               {/* Status Overlay */}
-              <div className="absolute top-6 left-6 right-6 bg-[#121212]/95 backdrop-blur-md border border-white/[0.08] p-5 rounded-2xl flex items-center justify-between shadow-2xl">
+              <div className="absolute top-4 left-4 right-4 sm:top-6 sm:left-6 sm:right-6 bg-[#121212]/95 backdrop-blur-md border border-white/[0.08] p-3.5 sm:p-5 rounded-2xl flex items-center justify-between shadow-2xl">
                 <div>
-                  <p className="text-[10px] text-neutral-500 uppercase tracking-widest font-bold">Simulator Map</p>
-                  <h4 className="text-sm font-bold text-white mt-1">
+                  <p className="text-[9px] sm:text-[10px] text-neutral-500 uppercase tracking-widest font-bold">Simulator Map</p>
+                  <h4 className="text-xs sm:text-sm font-bold text-white mt-1">
                     {!activeSim && (selectedMechanic ? `Ready to request ${selectedMechanic.name}` : 'Select a provider on map or list')}
                     {activeSim && simStep === 0 && `Broadcasting request to ${activeMech.name}...`}
                     {activeSim && simStep === 1 && `Waiting for ${activeMech.name} to accept...`}
@@ -719,9 +719,9 @@ const InteractiveSimulator = () => {
                   </h4>
                 </div>
                 {activeSim && simStep >= 2 && (
-                  <div className="text-right">
-                    <p className="text-[10px] text-neutral-500 uppercase tracking-widest font-bold">Live ETA</p>
-                    <p className="text-sm font-black text-red-500 mt-1">{eta > 0 ? `${eta} mins` : 'Arrived'}</p>
+                  <div className="text-right flex-shrink-0 ml-4">
+                    <p className="text-[9px] sm:text-[10px] text-neutral-500 uppercase tracking-widest font-bold">Live ETA</p>
+                    <p className="text-xs sm:text-sm font-black text-red-500 mt-1">{eta > 0 ? `${eta} mins` : 'Arrived'}</p>
                   </div>
                 )}
               </div>

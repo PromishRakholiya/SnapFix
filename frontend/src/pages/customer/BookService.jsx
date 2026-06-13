@@ -435,48 +435,31 @@ const BookService = () => {
 
         {selectedMechanic ? (
           <div className="bg-white/[0.03] rounded-2xl p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
+            {/* Top row: avatar + name + actions */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              {/* Left: avatar + name + meta */}
+              <div className="flex items-center gap-4">
                 <div className="flex-shrink-0">
-                  <div className="w-16 h-16 bg-primary-500/15 rounded-full flex items-center justify-center">
-                    <UserIcon className="h-8 w-8 text-primary-400" />
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 bg-primary-500/15 rounded-full flex items-center justify-center">
+                    <UserIcon className="h-7 w-7 sm:h-8 sm:w-8 text-primary-400" />
                   </div>
                 </div>
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-white">
+                <div className="min-w-0">
+                  <h3 className="text-base sm:text-lg font-semibold text-white truncate">
                     {selectedMechanic.name}
                   </h3>
-                  <div className="flex items-center space-x-4 text-sm text-neutral-400">
-                    <div className="flex items-center">
-                      {getRatingStars(selectedMechanic.rating || 0)}
-                      <span className="ml-1">
-                        ({selectedMechanic.rating?.toFixed(1) || "N/A"})
-                      </span>
-                    </div>
-                    <div className="flex items-center">
-                      <MapPinIcon className="h-4 w-4 mr-1" />
-                      <span>
-                        {selectedMechanic.location?.address ||
-                          "Location not available"}
-                      </span>
-                    </div>
-                    <div className="flex items-center">
-                      <PhoneIcon className="h-4 w-4 mr-1" />
-                      <span>
-                        {selectedMechanic.phone || "Phone not available"}
-                      </span>
-                    </div>
-                    {selectedMechanic.specialties &&
-                      selectedMechanic.specialties.length > 0 && (
-                        <div className="flex items-center">
-                          <WrenchScrewdriverIcon className="h-4 w-4 mr-1" />
-                          <span>{selectedMechanic.specialties.join(", ")}</span>
-                        </div>
-                      )}
+                  {/* Rating */}
+                  <div className="flex items-center gap-1 mt-0.5">
+                    {getRatingStars(selectedMechanic.rating || 0)}
+                    <span className="text-sm text-neutral-400 ml-1">
+                      ({selectedMechanic.rating?.toFixed(1) || "N/A"})
+                    </span>
                   </div>
                 </div>
               </div>
-              <div className="flex items-center space-x-3">
+
+              {/* Right: Direct Booking badge + Change Mechanic (desktop) */}
+              <div className="hidden sm:flex items-center gap-3 flex-shrink-0">
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-success-500/15 text-green-800">
                   Direct Booking
                 </span>
@@ -489,6 +472,41 @@ const BookService = () => {
                   Change Mechanic
                 </Button>
               </div>
+            </div>
+
+            {/* Info row: location + phone (wraps to vertical on mobile) */}
+            <div className="mt-3 flex flex-col sm:flex-row flex-wrap gap-2 text-sm text-neutral-400">
+              <div className="flex items-start gap-1.5">
+                <MapPinIcon className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                <span className="break-words">
+                  {selectedMechanic.location?.address || "Location not available"}
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <PhoneIcon className="h-4 w-4 flex-shrink-0" />
+                <span>{selectedMechanic.phone || "Phone not available"}</span>
+              </div>
+              {selectedMechanic.specialties && selectedMechanic.specialties.length > 0 && (
+                <div className="flex items-center gap-1.5">
+                  <WrenchScrewdriverIcon className="h-4 w-4 flex-shrink-0" />
+                  <span className="truncate">{selectedMechanic.specialties.join(", ")}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Mobile: badge + button stacked at the bottom */}
+            <div className="mt-3 flex items-center gap-3 sm:hidden">
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-success-500/15 text-green-800">
+                Direct Booking
+              </span>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => navigate("/customer/mechanics")}
+              >
+                Change Mechanic
+              </Button>
             </div>
 
             {/* Additional Mechanic Info */}

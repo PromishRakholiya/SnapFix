@@ -192,14 +192,14 @@ const Calendar = () => {
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white">Service Calendar</h1>
           <p className="text-neutral-400">
             View and manage your service requests by month
           </p>
         </div>
-        <div className="flex items-center space-x-4">
+        <div className="flex flex-wrap items-center gap-2 justify-between sm:justify-end">
           <Button
             variant="outline"
             onClick={() => navigateMonth("prev")}
@@ -245,12 +245,21 @@ const Calendar = () => {
         <div className="bg-white/[0.05] rounded-2xl shadow-soft border">
           {/* Calendar Header */}
           <div className="grid grid-cols-7 gap-px bg-white/[0.06] border-b">
-            {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
+            {[
+              { full: "Sun", short: "S" },
+              { full: "Mon", short: "M" },
+              { full: "Tue", short: "T" },
+              { full: "Wed", short: "W" },
+              { full: "Thu", short: "T" },
+              { full: "Fri", short: "F" },
+              { full: "Sat", short: "S" },
+            ].map((day) => (
               <div
-                key={day}
-                className="bg-white/[0.03] px-3 py-2 text-sm font-medium text-white text-center"
+                key={day.full}
+                className="bg-white/[0.03] px-1 sm:px-3 py-2 text-xs sm:text-sm font-medium text-white text-center"
               >
-                {day}
+                <span className="hidden sm:inline">{day.full}</span>
+                <span className="sm:hidden">{day.short}</span>
               </div>
             ))}
           </div>
@@ -267,7 +276,7 @@ const Calendar = () => {
               return (
                 <div
                   key={index}
-                  className={`min-h-32 bg-white/[0.05] p-2 ${
+                  className={`min-h-16 sm:min-h-24 lg:min-h-32 bg-white/[0.05] p-1 sm:p-2 ${
                     dayRequests.length > 0
                       ? "cursor-pointer hover:bg-white/[0.03]"
                       : ""

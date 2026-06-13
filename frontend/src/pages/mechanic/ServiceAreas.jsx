@@ -151,7 +151,7 @@ const ServiceAreas = () => {
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
           <h1 className="text-2xl font-bold text-white">Service Areas</h1>
           <p className="text-neutral-400">Manage your service coverage areas and pricing</p>
@@ -168,7 +168,7 @@ const ServiceAreas = () => {
       {/* Add/Edit Form */}
       {showAddForm && (
         <div className="bg-white/[0.05] rounded-2xl shadow-soft border p-6">
-          <div className="flex justify-between items-center mb-6">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
             <h2 className="text-lg font-semibold text-white">
               {editingArea ? 'Edit Service Area' : 'Add New Service Area'}
             </h2>
@@ -310,10 +310,10 @@ const ServiceAreas = () => {
           <div className="divide-y divide-white/[0.06]">
             {serviceAreas.map((area) => (
               <div key={area._id} className="p-6 hover:bg-white/[0.03]">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div className="flex-1">
                     <div className="flex items-center space-x-3">
-                      <MapPinIcon className="h-5 w-5 text-neutral-500" />
+                      <MapPinIcon className="h-5 w-5 text-neutral-500 flex-shrink-0" />
                       <div>
                         <h4 className="text-lg font-medium text-white">{area.name}</h4>
                         <p className="text-sm text-neutral-400">{area.address}</p>
@@ -346,7 +346,7 @@ const ServiceAreas = () => {
                     )}
                   </div>
 
-                  <div className="flex space-x-2">
+                  <div className="flex gap-2">
                     <Button
                       variant="outline"
                       size="sm"

@@ -237,7 +237,7 @@ const MechanicDashboard = () => {
           <p className="text-neutral-400 text-lg mb-8 leading-relaxed font-medium max-w-lg">
             Ready to help customers with their vehicle issues? Your workstation is fully synchronized.
           </p>
-          <div className="flex items-center space-x-4">
+          <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center space-x-2 bg-white/[0.05] px-4 py-2 rounded-xl border border-white/[0.08]">
               <div className="w-2.5 h-2.5 bg-success-400 rounded-full animate-pulse"></div>
               <span className="text-sm font-bold text-neutral-300">Online & Available</span>

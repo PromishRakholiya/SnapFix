@@ -176,7 +176,7 @@ const VehicleManagement = () => {
   return (
     <div className="max-w-6xl mx-auto">
       <div className="bg-white/[0.05] rounded-2xl shadow-card p-6">
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
           <div>
             <h1 className="text-2xl font-bold text-white">My Vehicles</h1>
             <p className="text-neutral-400 mt-1">
@@ -310,7 +310,7 @@ const VehicleManagement = () => {
                 </select>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-neutral-300 mb-1">
                     Make *
@@ -339,7 +339,7 @@ const VehicleManagement = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-neutral-300 mb-1">
                     Year *
