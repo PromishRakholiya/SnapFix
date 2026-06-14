@@ -94,6 +94,41 @@ const userSchema = new mongoose.Schema({
       max: 180
     }
   },
+  avatar: {
+    type: String,
+    default: null
+  },
+  experience: {
+    type: Number,
+    min: [0, 'Experience cannot be negative'],
+    max: [50, 'Experience seems too high'],
+    default: null
+  },
+  bio: {
+    type: String,
+    maxlength: [500, 'Bio cannot exceed 500 characters'],
+    default: null
+  },
+  specializations: [{
+    type: String,
+    trim: true
+  }],
+  workingHours: {
+    start: {
+      type: String,
+      default: '09:00'
+    },
+    end: {
+      type: String,
+      default: '18:00'
+    }
+  },
+  serviceRadius: {
+    type: Number,
+    min: [1, 'Service radius must be at least 1 km'],
+    max: [100, 'Service radius cannot exceed 100 km'],
+    default: 10
+  },
   vehicles: [vehicleSchema],
   rating: {
     type: Number,
@@ -136,7 +171,7 @@ userSchema.index({ phone: 1 });
 // Hash password before saving
 userSchema.pre('save', async function(next) {
   if (!this.isModified('passwordHash')) {
-    next();
+    return next();
   }
   const salt = await bcrypt.genSalt(12);
   this.passwordHash = await bcrypt.hash(this.passwordHash, salt);

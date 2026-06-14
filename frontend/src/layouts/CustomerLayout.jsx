@@ -10,6 +10,7 @@ import PaymentHistory from '../pages/customer/PaymentHistory';
 import Profile from '../pages/customer/Profile';
 import MechanicDiscovery from '../pages/customer/MechanicDiscovery';
 import Chat from '../pages/customer/Chat';
+import CustomerLiveTracker from '../pages/customer/CustomerLiveTracker';
 import Sidebar from '../components/common/Sidebar';
 import Header from '../components/common/Header';
 
@@ -24,6 +25,7 @@ const AnimatedCustomerRoutes = () => {
 
         <Route path="book-service" element={<PageTransition><BookService /></PageTransition>} />
         <Route path="requests" element={<PageTransition><RequestHistory /></PageTransition>} />
+        <Route path="requests/:requestId/track" element={<PageTransition><CustomerLiveTracker /></PageTransition>} />
         <Route path="payments" element={<PageTransition><PaymentHistory /></PageTransition>} />
         <Route path="chat" element={<PageTransition><Chat /></PageTransition>} />
         <Route path="profile" element={<PageTransition><Profile /></PageTransition>} />

@@ -40,10 +40,6 @@ const protect = asyncHandler(async (req, res, next) => {
       return sendErrorResponse(res, 401, 'User recently changed password. Please log in again.');
     }
 
-    // Update last login
-    user.lastLogin = new Date();
-    await user.save({ validateBeforeSave: false });
-
     // Grant access to protected route
     req.user = user;
     next();

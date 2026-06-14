@@ -2,14 +2,27 @@ import React, { useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { UserCircleIcon } from "@heroicons/react/24/outline";
 import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 
 const Header = ({ onMenuClick }) => {
   const { user, logout } = useAuth();
   const [showDropdown, setShowDropdown] = useState(false);
+  const navigate = useNavigate();
 
   const handleLogout = () => {
     logout();
     setShowDropdown(false);
+  };
+
+  const handleProfileSettingsClick = () => {
+    setShowDropdown(false);
+    if (user?.role === 'admin') {
+      navigate('/admin/settings');
+    } else if (user?.role === 'mechanic') {
+      navigate('/mechanic/profile');
+    } else if (user?.role === 'customer') {
+      navigate('/customer/profile');
+    }
   };
 
   return (
@@ -53,8 +66,16 @@ const Header = ({ onMenuClick }) => {
               onClick={() => setShowDropdown(!showDropdown)}
               className="flex items-center space-x-3 p-1.5 pr-4 bg-white/[0.05] border border-white/[0.08] rounded-2xl hover:bg-white/[0.08] hover:border-white/[0.12] transition-all duration-200"
             >
-              <div className="h-10 w-10 bg-gradient-to-tr from-primary-500/20 to-accent-dark/20 rounded-xl flex items-center justify-center border border-primary-500/20">
-                <UserCircleIcon className="h-7 w-7 text-primary-400" />
+              <div className="h-10 w-10 bg-white/[0.05] rounded-xl flex items-center justify-center overflow-hidden border border-white/[0.08]">
+                {user?.avatar ? (
+                  <img
+                    src={user.avatar}
+                    alt="Profile"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <UserCircleIcon className="h-7 w-7 text-primary-400" />
+                )}
               </div>
               <div className="text-left hidden sm:block">
                 <p className="text-sm font-bold text-white leading-tight">
@@ -85,15 +106,9 @@ const Header = ({ onMenuClick }) => {
                   <div className="px-2">
                     <button
                       className="block w-full text-left px-3 py-2.5 text-sm font-medium text-neutral-400 hover:bg-white/[0.05] hover:text-primary-400 rounded-xl transition-colors"
-                      onClick={() => setShowDropdown(false)}
+                      onClick={handleProfileSettingsClick}
                     >
                       Profile Settings
-                    </button>
-                    <button
-                      className="block w-full text-left px-3 py-2.5 text-sm font-medium text-neutral-400 hover:bg-white/[0.05] hover:text-primary-400 rounded-xl transition-colors"
-                      onClick={() => setShowDropdown(false)}
-                    >
-                      Preferences
                     </button>
                   </div>
 

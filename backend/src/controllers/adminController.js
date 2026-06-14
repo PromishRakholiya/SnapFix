@@ -212,7 +212,7 @@ const getDashboardStats = async (req, res) => {
     const serviceRequests = {
       total: Object.values(requestStatsByStatus).reduce((sum, count) => sum + count, 0),
       pending: requestStatsByStatus.pending || 0,
-      active: requestStatsByStatus.active || 0,
+      active: (requestStatsByStatus.offered || 0) + (requestStatsByStatus.assigned || 0) + (requestStatsByStatus.enroute || 0) + (requestStatsByStatus.in_progress || 0),
       completed: requestStatsByStatus.completed || 0,
       cancelled: requestStatsByStatus.cancelled || 0
     };
@@ -508,7 +508,7 @@ const updateUserStatus = async (req, res) => {
       await ServiceRequest.updateMany(
         {
           mechanicId: userId,
-          status: { $in: ['pending', 'active'] }
+          status: { $in: ['pending', 'offered', 'assigned', 'enroute', 'in_progress'] }
         },
         {
           status: 'cancelled',

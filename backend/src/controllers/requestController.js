@@ -1,8 +1,8 @@
 const ServiceRequest = require('../models/ServiceRequest');
 const User = require('../models/User');
-const { 
-  sendSuccessResponse, 
-  sendErrorResponse, 
+const {
+  sendSuccessResponse,
+  sendErrorResponse,
   asyncHandler,
   getPaginationOptions,
   generatePaginationMeta,
@@ -121,12 +121,12 @@ const createServiceRequest = asyncHandler(async (req, res) => {
 
   // Handle image uploads
   let imageUrls = [];
-  
+
   // 1. Get image URLs from request body (pre-uploaded)
   if (req.body.images && Array.isArray(req.body.images)) {
     imageUrls = [...req.body.images];
   }
-  
+
   // 2. Get image URLs from request files (direct upload)
   if (req.files && req.files.length > 0) {
     try {
@@ -152,7 +152,7 @@ const createServiceRequest = asyncHandler(async (req, res) => {
       timeOfDay: new Date(),
       weather: 'clear' // Could be enhanced with weather API
     });
-    
+
     quotation = quotationResult.quotation;
     estimatedDuration = quotationResult.estimatedDuration;
   } catch (error) {
@@ -205,7 +205,7 @@ const createServiceRequest = asyncHandler(async (req, res) => {
   try {
     // Notify customer
     await notificationService.notifyRequestCreated(serviceRequest.customerId, serviceRequest);
-    
+
     if (isDirectBooking && mechanicId) {
       // Direct booking - notify only the specific mechanic
       const mechanic = await User.findById(mechanicId);
@@ -234,16 +234,16 @@ const createServiceRequest = asyncHandler(async (req, res) => {
 
       if (nearbyMechanics.length > 0) {
         await notificationService.broadcastToMechanics(serviceRequest, nearbyMechanics);
-        
+
         // Real-time socket broadcast to available mechanics
         const io = req.app.get('io');
         const socketHandlers = req.app.get('socketHandlers');
-        
+
         if (io && socketHandlers) {
           try {
             // Use the socket helper function to broadcast
             socketHandlers.broadcastServiceRequest(serviceRequest, nearbyMechanics);
-            
+
             logger.info('Real-time broadcast sent to mechanics:', {
               requestId: serviceRequest._id,
               mechanicCount: nearbyMechanics.length,
@@ -335,21 +335,21 @@ const createServiceRequest = asyncHandler(async (req, res) => {
 const getMyRequests = asyncHandler(async (req, res) => {
   console.log('getMyRequests: User ID:', req.user._id);
   console.log('getMyRequests: Query params:', req.query);
-  
+
   const { page, limit, skip } = getPaginationOptions(req.query);
   const { status, issueType, startDate, endDate, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
 
   // Build filter
   const filter = { customerId: req.user._id };
-  
+
   if (status) {
     filter.status = Array.isArray(status) ? { $in: status } : status;
   }
-  
+
   if (issueType) {
     filter.issueType = issueType;
   }
-  
+
   if (startDate || endDate) {
     filter.createdAt = {};
     if (startDate) filter.createdAt.$gte = new Date(startDate);
@@ -415,10 +415,10 @@ const getRequestDetails = asyncHandler(async (req, res) => {
     return sendErrorResponse(res, 403, 'Access denied');
   }
 
-  if (req.user.role === 'mechanic' && 
-      request.mechanicId && 
-      request.mechanicId._id.toString() !== req.user._id.toString() && 
-      request.status !== 'pending') {
+  if (req.user.role === 'mechanic' &&
+    request.mechanicId &&
+    request.mechanicId._id.toString() !== req.user._id.toString() &&
+    request.status !== 'pending') {
     return sendErrorResponse(res, 403, 'Access denied');
   }
 
@@ -492,6 +492,28 @@ const cancelRequest = asyncHandler(async (req, res) => {
   // Update status
   request.cancellationReason = reason.trim();
   await request.updateStatus('cancelled', req.user._id, `Cancelled by customer: ${reason}`);
+
+  // Notify via Socket
+  const socketHandlers = req.app.get('socketHandlers');
+  if (socketHandlers) {
+    socketHandlers.emitToRequest(request._id.toString(), 'request_updated', {
+      requestId: request._id,
+      status: 'cancelled',
+      reason: reason.trim(),
+      timestamp: new Date()
+    });
+    socketHandlers.emitToRequest(request._id.toString(), 'request-cancelled', {
+      requestId: request._id,
+      reason: reason.trim(),
+      timestamp: new Date()
+    });
+    socketHandlers.emitToRequest(request._id.toString(), 'status-update', {
+      requestId: request._id,
+      status: 'cancelled',
+      message: `Cancelled by customer: ${reason}`,
+      timestamp: new Date()
+    });
+  }
 
   // Notify mechanic if assigned
   if (request.mechanicId) {
@@ -721,7 +743,7 @@ const getMechanicTasks = asyncHandler(async (req, res) => {
         request.location.lng
       );
     }
-    
+
     return {
       ...request.toObject(),
       distance
@@ -788,7 +810,7 @@ const acceptRequest = asyncHandler(async (req, res) => {
       request.quotation = request.userExpectedPrice;
       request.mechanicOfferPrice = request.userExpectedPrice;
     }
-    
+
     // Update estimated duration if provided
     if (estimatedDuration && estimatedDuration > 0) {
       request.estimatedDuration = estimatedDuration;
@@ -796,11 +818,27 @@ const acceptRequest = asyncHandler(async (req, res) => {
 
     await request.updateStatus('offered', req.user._id, 'Direct booking request accepted with an offer');
 
-    // Notify customer
+    // Notify customer via email/SMS
     try {
       await notificationService.notifyStatusUpdate(request.customerId, request, 'offered');
     } catch (error) {
       logger.error('Customer notification failed:', error);
+    }
+
+    // Notify customer via Socket
+    const socketHandlers = req.app.get('socketHandlers');
+    if (socketHandlers) {
+      socketHandlers.emitToRequest(request._id.toString(), 'request-accepted', {
+        mechanicId: req.user._id,
+        estimatedArrival: estimatedArrival || 30,
+        status: 'offered'
+      });
+      socketHandlers.emitToRequest(request._id.toString(), 'request_updated', {
+        requestId: request._id,
+        status: 'offered',
+        mechanicOfferPrice: request.mechanicOfferPrice,
+        quotation: request.quotation
+      });
     }
 
     logger.info('Direct booking request accepted:', {
@@ -822,7 +860,7 @@ const acceptRequest = asyncHandler(async (req, res) => {
 
   // Assign mechanic
   request.mechanicId = req.user._id;
-  
+
   // Update quotation and mechanicOfferPrice
   if (quotation && quotation > 0) {
     request.quotation = quotation;
@@ -832,18 +870,34 @@ const acceptRequest = asyncHandler(async (req, res) => {
     request.quotation = request.userExpectedPrice;
     request.mechanicOfferPrice = request.userExpectedPrice;
   }
-  
+
   if (estimatedDuration && estimatedDuration > 0) {
     request.estimatedDuration = estimatedDuration;
   }
 
   await request.updateStatus('offered', req.user._id, 'Mechanic offered a quotation');
 
-  // Notify customer
+  // Notify customer via email/SMS
   try {
     await notificationService.notifyStatusUpdate(request.customerId, request, 'offered');
   } catch (error) {
     logger.error('Customer notification failed:', error);
+  }
+
+  // Notify customer via Socket
+  const socketHandlers = req.app.get('socketHandlers');
+  if (socketHandlers) {
+    socketHandlers.emitToRequest(request._id.toString(), 'request-accepted', {
+      mechanicId: req.user._id,
+      estimatedArrival: estimatedDuration || 30,
+      status: 'offered'
+    });
+    socketHandlers.emitToRequest(request._id.toString(), 'request_updated', {
+      requestId: request._id,
+      status: 'offered',
+      mechanicOfferPrice: request.mechanicOfferPrice,
+      quotation: request.quotation
+    });
   }
 
   logger.info('Service request accepted:', {
@@ -996,6 +1050,50 @@ const updateRequestStatus = asyncHandler(async (req, res) => {
     logger.error('Customer notification failed:', error);
   }
 
+  // Notify via Socket
+  const socketHandlers = req.app.get('socketHandlers');
+  if (socketHandlers) {
+    socketHandlers.emitToRequest(request._id.toString(), 'status-update', {
+      requestId: request._id,
+      status,
+      message: note || `Status updated to ${status}`,
+      timestamp: new Date()
+    });
+
+    socketHandlers.emitToRequest(request._id.toString(), 'request_updated', {
+      requestId: request._id,
+      status,
+      message: note || `Status updated to ${status}`,
+      timestamp: new Date()
+    });
+
+    if (status === 'in_progress') {
+      socketHandlers.emitToRequest(request._id.toString(), 'service_started', {
+        requestId: request._id,
+        mechanicId: req.user._id,
+        status: 'in_progress',
+        timestamp: new Date()
+      });
+      socketHandlers.emitToRequest(request._id.toString(), 'work-started', {
+        requestId: request._id,
+        mechanicId: req.user._id,
+        status: 'in_progress',
+        timestamp: new Date()
+      });
+    } else if (status === 'completed') {
+      socketHandlers.emitToRequest(request._id.toString(), 'service_completed', {
+        requestId: request._id,
+        status: 'completed',
+        timestamp: new Date()
+      });
+      socketHandlers.emitToRequest(request._id.toString(), 'work-completed', {
+        requestId: request._id,
+        status: 'completed',
+        timestamp: new Date()
+      });
+    }
+  }
+
   logger.info('Service request status updated:', {
     requestId: request._id,
     mechanicId: req.user._id,
@@ -1035,7 +1133,7 @@ const confirmRequestPrice = asyncHandler(async (req, res) => {
   request.isPriceConfirmed = true;
   request.finalAmount = request.mechanicOfferPrice; // Set the agreed price
   request.quotation = request.mechanicOfferPrice; // For legacy display consistency
-  
+
   // Add timeline entry
   if (!request.history) request.history = [];
   request.history.push({
@@ -1052,6 +1150,30 @@ const confirmRequestPrice = asyncHandler(async (req, res) => {
     await notificationService.notifyMechanicAssigned(request.mechanicId, req.user, request);
   } catch (error) {
     logger.error('Mechanic notification failed:', error);
+  }
+
+  // Notify via Socket
+  const socketHandlers = req.app.get('socketHandlers');
+  if (socketHandlers) {
+    socketHandlers.emitToRequest(request._id.toString(), 'request_updated', {
+      requestId: request._id,
+      status: 'assigned',
+      isPriceConfirmed: true,
+      finalAmount: request.finalAmount,
+      quotation: request.quotation,
+      timestamp: new Date()
+    });
+    socketHandlers.emitToRequest(request._id.toString(), 'status-update', {
+      requestId: request._id,
+      status: 'assigned',
+      message: 'Mechanic assigned and price confirmed.',
+      timestamp: new Date()
+    });
+    socketHandlers.emitToRequest(request._id.toString(), 'mechanic_assigned', {
+      requestId: request._id,
+      mechanicId: request.mechanicId._id,
+      timestamp: new Date()
+    });
   }
 
   logger.info('Service request price confirmed and assigned:', {

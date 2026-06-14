@@ -360,24 +360,23 @@ const MechanicDashboard = () => {
                             
                             <div className="flex-1"></div>
                             
-                            {request.status === 'pending' ? (
-                              <Link to={`/mechanic/requests/${request._id}`}>
-                                <Button variant="success" size="sm" className="font-bold">
-                                  Accept & Offer Price
+                            {['assigned', 'enroute', 'in_progress'].includes(request.status) ? (
+                              <Link to={`/mechanic/requests/${request._id}/track`}>
+                                <Button variant="primary" size="sm" className="font-bold">
+                                  Live Tracking
                                 </Button>
                               </Link>
                             ) : (
-                              <Link to={`/mechanic/requests/${request._id}`}>
-                                <Button variant="outline" size="sm" className="font-bold">
-                                  View Details
-                                </Button>
-                              </Link>
-                            )}
-                            
-                            {(request.status === 'assigned' || request.status === 'enroute') && (
-                              <Button variant="primary" size="sm" className="font-bold" onClick={() => { setSelectedRequest(request); setShowNavigationModal(true); }}>
-                                <ArrowTopRightOnSquareIcon className="h-4 w-4 mr-1.5" />
-                                Navigate
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="font-bold"
+                                onClick={() => {
+                                  setSelectedRequest(request);
+                                  setShowDetailsModal(true);
+                                }}
+                              >
+                                View Details
                               </Button>
                             )}
                           </div>

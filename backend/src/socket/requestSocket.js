@@ -97,15 +97,18 @@ const initializeRequestSocket = (io) => {
       const { userId, location, heading, speed, requestId, lat, lng } = data;
       const mechanicId = socket.mechanicId || data.mechanicId;
       
+      const finalLat = lat !== undefined ? lat : (location ? location.lat : undefined);
+      const finalLng = lng !== undefined ? lng : (location ? location.lng : undefined);
+
       // If direct request tracking (exact lat/lng coordinates to a specific request room)
-      if (requestId && lat !== undefined && lng !== undefined) {
+      if (requestId && finalLat !== undefined && finalLng !== undefined) {
         requestNamespace.to(`request_${requestId}`).emit('location_updated', {
           mechanicId,
-          lat,
-          lng,
-          accuracy: data.accuracy || 10,
-          heading,
-          speed,
+          lat: finalLat,
+          lng: finalLng,
+          accuracy: data.accuracy || (location && location.accuracy) || 10,
+          heading: heading || (location && location.heading),
+          speed: speed || (location && location.speed),
           timestamp: new Date()
         });
         return;

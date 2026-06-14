@@ -152,6 +152,7 @@ class SocketService {
   onRequestUpdate(callback) {
     if (this.requestNamespace) {
       this.requestNamespace.on('request_updated', callback);
+      this.requestNamespace.on('status-update', callback);
     }
   }
 
@@ -166,6 +167,7 @@ class SocketService {
   onNewMessage(callback) {
     if (this.requestNamespace) {
       this.requestNamespace.on('new-message', callback);
+      this.requestNamespace.on('new_message', callback);
     }
   }
 
@@ -187,6 +189,7 @@ class SocketService {
   onServiceStarted(callback) {
     if (this.requestNamespace) {
       this.requestNamespace.on('service_started', callback);
+      this.requestNamespace.on('work-started', callback);
     }
   }
 
@@ -194,6 +197,7 @@ class SocketService {
   onServiceCompleted(callback) {
     if (this.requestNamespace) {
       this.requestNamespace.on('service_completed', callback);
+      this.requestNamespace.on('work-completed', callback);
     }
   }
 

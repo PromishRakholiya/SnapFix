@@ -22,12 +22,37 @@ describe("SnapFix API Integration Tests", () => {
     if (mongoose.connection.readyState !== 1) {
       await mongoose.connect(TEST_DB_URI);
     }
+
+    // Clean up stale test data from previous crashed runs
+    const User = mongoose.model('User');
+    const OTP = mongoose.model('OTP');
+    await User.deleteMany({ email: { $in: ['customer@test.com', 'mechanic@test.com'] } });
+    await OTP.deleteMany({ identifier: { $in: ['customer@test.com', 'mechanic@test.com', '+11234567890', '+11234567891'] } });
   });
 
   afterAll(async () => {
-    // Clean up test data
+    // Clean up only test data created during test runs
     if (mongoose.connection.readyState === 1) {
-      await mongoose.connection.db.dropDatabase();
+      const User = mongoose.model('User');
+      const ServiceRequest = mongoose.model('ServiceRequest');
+      const Payment = mongoose.model('Payment');
+      const Review = mongoose.model('Review');
+      const OTP = mongoose.model('OTP');
+
+      // Delete specific test users and request
+      if (customerId) await User.deleteOne({ _id: customerId });
+      if (mechanicId) await User.deleteOne({ _id: mechanicId });
+      if (serviceRequestId) await ServiceRequest.deleteOne({ _id: serviceRequestId });
+
+      // Clean up collections for test identifiers
+      await User.deleteMany({ email: { $in: ['customer@test.com', 'mechanic@test.com'] } });
+      await OTP.deleteMany({ identifier: { $in: ['customer@test.com', 'mechanic@test.com', '+11234567890', '+11234567891'] } });
+      
+      if (serviceRequestId) {
+        await Payment.deleteMany({ requestId: serviceRequestId });
+        await Review.deleteMany({ requestId: serviceRequestId });
+      }
+
       await mongoose.connection.close();
     }
 
@@ -65,12 +90,22 @@ describe("SnapFix API Integration Tests", () => {
 
         expect(response.body).toHaveProperty("success", true);
         expect(response.body.data).toHaveProperty("user");
-        expect(response.body.data).toHaveProperty("tokens");
         expect(response.body.data.user.email).toBe(customerData.email);
         expect(response.body.data.user.role).toBe("customer");
 
-        customerToken = response.body.data.tokens.accessToken;
         customerId = response.body.data.user.id;
+
+        // Manually verify user in the database to allow login/token generation
+        const User = mongoose.model('User');
+        await User.updateOne({ _id: customerId }, { isVerified: true });
+
+        // Log in to get the token
+        const loginResponse = await request(app)
+          .post("/api/auth/login")
+          .send({ email: customerData.email, password: customerData.password })
+          .expect(200);
+
+        customerToken = loginResponse.body.data.tokens.accessToken;
       });
 
       test("POST /api/auth/register should register a mechanic", async () => {
@@ -90,8 +125,19 @@ describe("SnapFix API Integration Tests", () => {
         expect(response.body).toHaveProperty("success", true);
         expect(response.body.data.user.role).toBe("mechanic");
 
-        mechanicToken = response.body.data.tokens.accessToken;
         mechanicId = response.body.data.user.id;
+
+        // Manually verify mechanic in the database to allow login/token generation
+        const User = mongoose.model('User');
+        await User.updateOne({ _id: mechanicId }, { isVerified: true });
+
+        // Log in to get the token
+        const loginResponse = await request(app)
+          .post("/api/auth/login")
+          .send({ email: mechanicData.email, password: mechanicData.password })
+          .expect(200);
+
+        mechanicToken = loginResponse.body.data.tokens.accessToken;
       });
 
       test("POST /api/auth/register should reject invalid data", async () => {
@@ -178,8 +224,11 @@ describe("SnapFix API Integration Tests", () => {
     describe("Vehicle Management", () => {
       test("POST /api/customer/vehicles should add a vehicle", async () => {
         const vehicleData = {
+          name: "My Camry",
           type: "car",
+          make: "Toyota",
           model: "Toyota Camry 2020",
+          year: 2020,
           plate: "TEST123",
         };
 
@@ -209,11 +258,16 @@ describe("SnapFix API Integration Tests", () => {
 
       test("PATCH /api/customer/vehicles/:vehicleId should update vehicle", async () => {
         const updateData = {
+          name: "My Camry",
+          type: "car",
+          make: "Toyota",
           model: "Toyota Camry 2021 Updated",
+          year: 2021,
+          plate: "TEST123"
         };
 
         const response = await request(app)
-          .patch(`/api/customer/vehicles/${vehicleId}`)
+          .put(`/api/customer/vehicles/${vehicleId}`)
           .set("Authorization", `Bearer ${customerToken}`)
           .send(updateData)
           .expect(200);

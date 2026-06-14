@@ -714,8 +714,8 @@ const deleteAccount = async (req, res) => {
 
       const activeRequests = await ServiceRequest.countDocuments({
       $or: [
-        { customer: userId, status: { $in: ['pending', 'active'] } },
-        { mechanicId: userId, status: { $in: ['pending', 'active'] } }
+        { customerId: userId, status: { $in: ['pending', 'offered', 'assigned', 'enroute', 'in_progress'] } },
+        { mechanicId: userId, status: { $in: ['pending', 'offered', 'assigned', 'enroute', 'in_progress'] } }
       ]
     });
 
@@ -953,9 +953,9 @@ const deleteVehicle = async (req, res) => {
 
     // Check if vehicle is used in any active service requests
     const activeRequests = await ServiceRequest.countDocuments({
-      customer: userId,
+      customerId: userId,
       vehicleId: vehicleId,
-      status: { $in: ['pending', 'accepted', 'en_route', 'in_progress'] }
+      status: { $in: ['pending', 'offered', 'assigned', 'enroute', 'in_progress'] }
     });
 
     if (activeRequests > 0) {

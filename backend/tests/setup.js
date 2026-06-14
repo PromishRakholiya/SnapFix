@@ -5,6 +5,39 @@ process.env.NODE_ENV = 'test';
 process.env.JWT_SECRET = 'test-jwt-secret-key-for-testing';
 process.env.JWT_REFRESH_SECRET = 'test-refresh-secret-key-for-testing';
 
+// Redirect MONGODB_URI and MONGO_URI to a test database during testing
+const redirectUri = (uri) => {
+  if (!uri) return uri;
+  if (uri.includes('?')) {
+    const parts = uri.split('?');
+    const base = parts[0];
+    const query = parts[1];
+    const baseParts = base.split('/');
+    if (baseParts.length > 3) {
+      baseParts[baseParts.length - 1] = 'snapfix_test';
+      return baseParts.join('/') + '?' + query;
+    }
+    return base + '/snapfix_test?' + query;
+  } else {
+    const baseParts = uri.split('/');
+    if (baseParts.length > 3) {
+      baseParts[baseParts.length - 1] = 'snapfix_test';
+      return baseParts.join('/');
+    }
+    return uri + '/snapfix_test';
+  }
+};
+
+if (process.env.MONGODB_URI) {
+  process.env.MONGODB_URI = redirectUri(process.env.MONGODB_URI);
+}
+if (process.env.MONGO_URI) {
+  process.env.MONGO_URI = redirectUri(process.env.MONGO_URI);
+}
+if (process.env.TEST_MONGODB_URI) {
+  process.env.TEST_MONGODB_URI = redirectUri(process.env.TEST_MONGODB_URI);
+}
+
 // Mock logger to reduce noise during tests
 jest.mock('../src/config/logger', () => ({
   info: jest.fn(),

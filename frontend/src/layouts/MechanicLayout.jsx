@@ -14,6 +14,7 @@ import Profile from '../pages/mechanic/Profile';
 import Calendar from '../pages/mechanic/Calendar';
 import VerificationForm from '../components/mechanic/VerificationForm';
 import Chat from '../pages/mechanic/Chat';
+import MechanicLiveTracker from '../pages/mechanic/MechanicLiveTracker';
 import Sidebar from '../components/common/Sidebar';
 import Header from '../components/common/Header';
 
@@ -25,6 +26,7 @@ const AnimatedMechanicRoutes = () => {
       <Routes location={location} key={location.pathname}>
         <Route path="dashboard" element={<PageTransition><MechanicDashboard /></PageTransition>} />
         <Route path="requests" element={<PageTransition><AssignedRequests /></PageTransition>} />
+        <Route path="requests/:requestId/track" element={<PageTransition><MechanicLiveTracker /></PageTransition>} />
         <Route path="calendar" element={<PageTransition><Calendar /></PageTransition>} />
         <Route path="earnings" element={<PageTransition><Earnings /></PageTransition>} />
         <Route path="chat/*" element={<PageTransition><Chat /></PageTransition>} />
@@ -77,6 +79,9 @@ const MechanicLayout = () => {
       if (!activeRequest || !activeRequest._id) return;
       const requestId = activeRequest._id;
       if (watchIdRef.current) return;
+
+      // Ensure mechanic joins socket request room
+      socketService.joinRequest(requestId);
 
       const simulateFlag = localStorage.getItem(`simulate_${requestId}`) === 'true';
 
@@ -195,6 +200,9 @@ const MechanicLayout = () => {
         console.log('Stopping watcher');
         watchIdRef.current.clear();
         watchIdRef.current = null;
+      }
+      if (activeRequestRef.current?._id) {
+        socketService.leaveRequest(activeRequestRef.current._id);
       }
     };
 

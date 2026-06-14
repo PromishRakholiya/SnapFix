@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   UserIcon, 
   EnvelopeIcon, 
@@ -12,6 +12,7 @@ import Input from '../../components/common/Input';
 import { useAuth } from '../../contexts/AuthContext';
 import { validateEmail } from '../../utils/helpers';
 import toast from 'react-hot-toast';
+import customerService from '../../services/customerService';
 
 const CustomerProfile = () => {
   const { user, updateUser } = useAuth();
@@ -23,6 +24,8 @@ const CustomerProfile = () => {
     phone: '',
     address: ''
   });
+  const fileInputRef = useRef(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
 
   useEffect(() => {
@@ -44,7 +47,27 @@ const CustomerProfile = () => {
     }));
   };
 
+  const handleAvatarChange = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
 
+    try {
+      setUploadingAvatar(true);
+      const response = await customerService.uploadAvatar(file);
+      if (response.success) {
+        toast.success('Avatar updated successfully!');
+        updateUser({ ...user, avatar: response.data.avatar || response.data.avatarUrl });
+      }
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      toast.error(error.message || 'Failed to upload avatar');
+    } finally {
+      setUploadingAvatar(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -62,14 +85,19 @@ const CustomerProfile = () => {
 
     setLoading(true);
     try {
-      // Update profile API call would go here
+      const response = await customerService.updateProfile({
+        name: formData.name,
+        phone: formData.phone,
+        address: formData.address
+      });
+      
       toast.success('Profile updated successfully!');
       setEditing(false);
       // Update user context
       updateUser({ ...user, ...formData });
     } catch (error) {
       console.error('Error updating profile:', error);
-      toast.error('Failed to update profile');
+      toast.error(error.message || 'Failed to update profile');
     } finally {
       setLoading(false);
     }
@@ -81,7 +109,7 @@ const CustomerProfile = () => {
       <div className="bg-white/[0.05] rounded-2xl shadow-card p-6">
         <div className="flex items-center space-x-6">
           <div className="relative">
-            <div className="w-24 h-24 rounded-full bg-gradient-to-r from-primary-500 to-primary-600 flex items-center justify-center">
+            <div className={`w-24 h-24 rounded-full bg-gradient-to-r from-primary-500 to-primary-600 flex items-center justify-center ${uploadingAvatar ? 'opacity-50' : ''}`}>
               {user?.avatar ? (
                 <img 
                   src={user.avatar} 
@@ -92,9 +120,20 @@ const CustomerProfile = () => {
                 <UserIcon className="w-12 h-12 text-white" />
               )}
             </div>
-            <button className="absolute bottom-0 right-0 bg-white/[0.05] rounded-full p-2 shadow-lg border border-white/[0.08] hover:bg-white/[0.03]">
+            <button 
+              className="absolute bottom-0 right-0 bg-white/[0.05] rounded-full p-2 shadow-lg border border-white/[0.08] hover:bg-white/[0.03]"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploadingAvatar}
+            >
               <CameraIcon className="w-4 h-4 text-neutral-400" />
             </button>
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              className="hidden" 
+              accept="image/*" 
+              onChange={handleAvatarChange} 
+            />
           </div>
           
           <div className="flex-1">

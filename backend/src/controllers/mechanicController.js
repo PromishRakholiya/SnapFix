@@ -90,8 +90,8 @@ const getProfile = async (req, res) => {
 
     // Get mechanic details, reviews, verification, and statistics
     const [
-      mechanic, 
-      recentReviews, 
+      mechanic,
+      recentReviews,
       verification,
       completedJobs,
       activeJobs,
@@ -145,14 +145,28 @@ const getProfile = async (req, res) => {
     });
 
     const profileData = mechanic.toObject();
-    
+
+    // Set values from mechanic User document
+    profileData.experience = mechanic.experience;
+    profileData.yearsOfExperience = mechanic.experience;
+    profileData.specializations = mechanic.specializations || [];
+    profileData.bio = mechanic.bio || '';
+    profileData.workingHours = mechanic.workingHours || { start: '09:00', end: '18:00' };
+    profileData.serviceRadius = mechanic.serviceRadius || 10;
+    profileData.avatar = mechanic.avatar || null;
+
     // Merge verification data if it exists
     if (verification) {
       profileData.shopName = verification.shopName;
       profileData.shopAddress = verification.shopAddress;
       profileData.verificationStatus = verification.status;
-      profileData.yearsOfExperience = verification.experience;
-      profileData.specializations = verification.specializations;
+      if (verification.experience !== undefined && verification.experience !== null) {
+        profileData.experience = verification.experience;
+        profileData.yearsOfExperience = verification.experience;
+      }
+      if (verification.specializations !== undefined && verification.specializations !== null) {
+        profileData.specializations = verification.specializations;
+      }
     }
 
     res.json({
@@ -282,6 +296,7 @@ const updateProfile = async (req, res) => {
     }
 
     const responseProfile = updatedMechanic.toObject();
+    responseProfile.yearsOfExperience = updatedMechanic.experience;
     if (updatedShopDetails) {
       responseProfile.shopName = updatedShopDetails.shopName;
       responseProfile.shopAddress = updatedShopDetails.shopAddress;
@@ -307,7 +322,7 @@ const updateProfile = async (req, res) => {
 
   } catch (error) {
     logger.error('Error updating mechanic profile:', error);
-    
+
     if (error.name === 'ValidationError') {
       return res.status(400).json({
         success: false,
@@ -366,8 +381,8 @@ const getMechanicStats = async (req, res) => {
       mechanicId: mechanicId
     });
 
-    const averageRating = reviews.length > 0 
-      ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length 
+    const averageRating = reviews.length > 0
+      ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
       : 0;
 
     // Get active requests
@@ -402,8 +417,8 @@ const getMechanicStats = async (req, res) => {
     const lastMonthEarnings = lastMonthPayments.reduce((sum, payment) => sum + payment.amount, 0);
 
     // Calculate growth
-    const growth = lastMonthEarnings > 0 
-      ? ((thisMonthEarnings - lastMonthEarnings) / lastMonthEarnings) * 100 
+    const growth = lastMonthEarnings > 0
+      ? ((thisMonthEarnings - lastMonthEarnings) / lastMonthEarnings) * 100
       : 0;
 
     res.json({
@@ -507,8 +522,8 @@ const getEarningsSummary = async (req, res) => {
     });
 
     const previousEarnings = previousPayments.reduce((sum, payment) => sum + payment.amount, 0);
-    const growth = previousEarnings > 0 
-      ? ((totalEarnings - previousEarnings) / previousEarnings) * 100 
+    const growth = previousEarnings > 0
+      ? ((totalEarnings - previousEarnings) / previousEarnings) * 100
       : 0;
 
     // Get completed requests for completion rate
@@ -526,12 +541,12 @@ const getEarningsSummary = async (req, res) => {
 
     // Get top services
     const topServices = await ServiceRequest.aggregate([
-      { 
-        $match: { 
+      {
+        $match: {
           mechanicId: new mongoose.Types.ObjectId(mechanicId),
           status: 'completed',
           createdAt: { $gte: finalStartDate, $lte: finalEndDate }
-        } 
+        }
       },
       {
         $group: {
@@ -630,10 +645,10 @@ const getDetailedEarnings = async (req, res) => {
       status: 'success',
       createdAt: { $gte: finalStartDate, $lte: finalEndDate }
     })
-    .populate('requestId', 'issueType status')
-    .populate('customerId', 'name phone')
-    .sort({ createdAt: -1 })
-    .lean();
+      .populate('requestId', 'issueType status')
+      .populate('customerId', 'name phone')
+      .sort({ createdAt: -1 })
+      .lean();
 
     // Map fields to match frontend expectations and handle missing records
     const mappedEarnings = payments.map(payment => {
@@ -819,9 +834,9 @@ const exportEarnings = async (req, res) => {
       mechanicId: mechanicId,
       createdAt: { $gte: startDate, $lte: endDate }
     })
-    .populate('serviceRequest', 'issueType status')
-    .populate('customer', 'name phone')
-    .sort({ createdAt: -1 });
+      .populate('serviceRequest', 'issueType status')
+      .populate('customer', 'name phone')
+      .sort({ createdAt: -1 });
 
     if (format === 'csv') {
       const csvData = [
@@ -840,7 +855,7 @@ const exportEarnings = async (req, res) => {
       });
 
       const csvContent = csvData.map(row => row.join(',')).join('\n');
-      
+
       res.setHeader('Content-Type', 'text/csv');
       res.setHeader('Content-Disposition', `attachment; filename=earnings-${period}-${new Date().toISOString().split('T')[0]}.csv`);
       res.send(csvContent);
@@ -905,7 +920,7 @@ const getAssignedRequests = async (req, res) => {
     });
 
     let filter;
-    
+
     try {
       // Fetch mechanic to get their current location for available requests
       const mechanic = await User.findById(mechanicId).select('location').lean();
@@ -916,8 +931,8 @@ const getAssignedRequests = async (req, res) => {
         filter = {
           $or: [
             { mechanicId: mechanicId },
-            { 
-              status: 'pending', 
+            {
+              status: 'pending',
               mechanicId: null,
               location: {
                 $near: {
@@ -934,16 +949,22 @@ const getAssignedRequests = async (req, res) => {
         // If a specific status is requested, apply it correctly
         if (status) {
           if (status === 'available') {
-             filter = { status: 'pending', mechanicId: null }; // Just nearby pending
+            filter = { status: 'pending', mechanicId: null }; // Just nearby pending
+          } else if (status === 'active') {
+            filter.status = { $in: ['assigned', 'enroute', 'in_progress'] };
           } else {
-             filter.status = status;
+            filter.status = status;
           }
         }
       } else {
         // Just assigned requests
         filter = { mechanicId: mechanicId };
         if (status) {
-          filter.status = status;
+          if (status === 'active') {
+            filter.status = { $in: ['assigned', 'enroute', 'in_progress'] };
+          } else {
+            filter.status = status;
+          }
         } else {
           // Show assigned, offered, enroute, in_progress, completed
           filter.status = { $in: ['offered', 'assigned', 'enroute', 'in_progress', 'completed'] };
@@ -1118,7 +1139,7 @@ const acceptRequest = async (req, res) => {
     request.estimatedArrival = estimatedArrival || 30; // Default 30 minutes if not provided
     request.mechanicOfferPrice = finalQuotation;
     request.quotation = finalQuotation;
-    
+
     // Add timeline entry
     if (!request.history) request.history = [];
     request.history.push({
@@ -1206,7 +1227,7 @@ const startWork = async (req, res) => {
     const request = await ServiceRequest.findOne({
       _id: requestId,
       mechanicId: mechanicId,
-      status: 'active'
+      status: { $in: ['assigned', 'enroute'] }
     }).populate('customerId', 'name email phone');
 
     if (!request) {
@@ -1217,21 +1238,39 @@ const startWork = async (req, res) => {
     }
 
     // Update request
+    request.status = 'in_progress';
     request.workStartedAt = new Date();
     if (arrivalLocation) request.arrivalLocation = arrivalLocation;
     if (workStartNotes) request.workStartNotes = workStartNotes;
 
-    // Add timeline entry
-    request.timeline.push({
-      status: 'work_started',
+    // Add history entry
+    if (!request.history) request.history = [];
+    request.history.push({
+      status: 'in_progress',
       timestamp: new Date(),
-      description: workStartNotes || 'Mechanic arrived and started working',
-      location: arrivalLocation || request.location
+      note: workStartNotes || 'Mechanic arrived and started working',
+      updatedBy: mechanicId
     });
 
     await request.save();
 
     // Real-time notifications
+    const socketHandlers = req.app.get('socketHandlers');
+    if (socketHandlers) {
+      socketHandlers.emitToRequest(requestId, 'status-update', {
+        requestId,
+        status: 'in_progress',
+        message: workStartNotes || 'Mechanic arrived and started working',
+        timestamp: new Date()
+      });
+      socketHandlers.emitToRequest(requestId, 'request_updated', {
+        requestId,
+        status: 'in_progress',
+        message: workStartNotes || 'Mechanic arrived and started working',
+        timestamp: new Date()
+      });
+    }
+
     const io = req.app.get('io');
     if (io) {
       io.to(`customer_${request.customerId._id}`).emit('workStarted', {
@@ -1329,7 +1368,7 @@ const completeRequest = async (req, res) => {
     const request = await ServiceRequest.findOne({
       _id: requestId,
       mechanicId: mechanicId,
-      status: 'active'
+      status: { $in: ['assigned', 'enroute', 'in_progress'] }
     }).populate('customerId', 'name email phone');
 
     if (!request) {
@@ -1352,12 +1391,13 @@ const completeRequest = async (req, res) => {
       request.workDuration = Math.round((request.completedAt - request.workStartedAt) / (1000 * 60)); // in minutes
     }
 
-    // Add timeline entry
-    request.timeline.push({
+    // Add history entry
+    if (!request.history) request.history = [];
+    request.history.push({
       status: 'completed',
       timestamp: new Date(),
-      description: `Service completed. ${workSummary}`,
-      location: request.arrivalLocation || request.location
+      note: `Service completed. ${workSummary}`,
+      updatedBy: mechanicId
     });
 
     await request.save();
@@ -1368,6 +1408,22 @@ const completeRequest = async (req, res) => {
     });
 
     // Real-time notifications
+    const socketHandlers = req.app.get('socketHandlers');
+    if (socketHandlers) {
+      socketHandlers.emitToRequest(requestId, 'status-update', {
+        requestId,
+        status: 'completed',
+        message: `Service completed. ${workSummary}`,
+        timestamp: new Date()
+      });
+      socketHandlers.emitToRequest(requestId, 'request_updated', {
+        requestId,
+        status: 'completed',
+        message: `Service completed. ${workSummary}`,
+        timestamp: new Date()
+      });
+    }
+
     const io = req.app.get('io');
     if (io) {
       io.to(`customer_${request.customerId._id}`).emit('requestCompleted', {
@@ -1596,6 +1652,23 @@ const updateRequestStatus = async (req, res) => {
 
     await serviceRequest.save();
 
+    // Real-time notifications
+    const socketHandlers = req.app.get('socketHandlers');
+    if (socketHandlers) {
+      socketHandlers.emitToRequest(requestId, 'status-update', {
+        requestId,
+        status,
+        message: `Status updated from ${previousStatus} to ${status}`,
+        timestamp: new Date()
+      });
+      socketHandlers.emitToRequest(requestId, 'request_updated', {
+        requestId,
+        status,
+        message: `Status updated from ${previousStatus} to ${status}`,
+        timestamp: new Date()
+      });
+    }
+
     logger.info('Service request status updated', {
       requestId,
       mechanicId,
@@ -1642,7 +1715,7 @@ const getServiceAreas = async (req, res) => {
     // For now, we'll return the mechanic's service radius and location
     // In a full implementation, you'd have a separate ServiceArea model
     const mechanic = await User.findById(mechanicId);
-    
+
     if (!mechanic) {
       return res.status(404).json({
         success: false,

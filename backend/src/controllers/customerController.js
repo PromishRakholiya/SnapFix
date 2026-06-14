@@ -271,7 +271,11 @@ const getServiceRequests = async (req, res) => {
 
     const filter = { customerId };
     if (status) {
-      filter.status = status;
+      if (status === 'active') {
+        filter.status = { $in: ['pending', 'offered', 'assigned', 'enroute', 'in_progress'] };
+      } else {
+        filter.status = status;
+      }
     }
 
     const skip = (parseInt(page) - 1) * parseInt(limit);

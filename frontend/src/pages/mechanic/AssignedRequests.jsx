@@ -380,70 +380,17 @@ const AssignedRequests = () => {
                         </span>
                       )}
 
-                      {request.status === "assigned" && (
-                        <>
+                      {["assigned", "enroute", "in_progress"].includes(request.status) && (
+                        <Link to={`/mechanic/requests/${request._id}/track`}>
                           <Button
                             variant="primary"
                             size="sm"
-                            onClick={() =>
-                              handleStatusUpdate(request._id, "enroute")
-                            }
+                            className="flex items-center gap-1"
+                            icon={<WrenchScrewdriverIcon className="h-4 w-4" />}
                           >
-                            Start Journey
+                            Live Tracking
                           </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedRequest(request);
-                              setShowNavigationModal(true);
-                            }}
-                            icon={
-                              <ArrowTopRightOnSquareIcon className="h-4 w-4" />
-                            }
-                          >
-                            Navigate
-                          </Button>
-                        </>
-                      )}
-
-                      {request.status === "enroute" && (
-                        <>
-                          <Button
-                            variant="primary"
-                            size="sm"
-                            onClick={() =>
-                              handleStatusUpdate(request._id, "in_progress")
-                            }
-                          >
-                            Start Work
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedRequest(request);
-                              setShowNavigationModal(true);
-                            }}
-                            icon={
-                              <ArrowTopRightOnSquareIcon className="h-4 w-4" />
-                            }
-                          >
-                            Navigate
-                          </Button>
-                        </>
-                      )}
-
-                      {request.status === "in_progress" && (
-                        <Button
-                          variant="success"
-                          size="sm"
-                          onClick={() =>
-                            handleStatusUpdate(request._id, "completed")
-                          }
-                        >
-                          Complete
-                        </Button>
+                        </Link>
                       )}
                     </div>
                   </div>

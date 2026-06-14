@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const customerController = require('../controllers/customerController');
 const requestController = require('../controllers/requestController');
+const userController = require('../controllers/userController');
 const { authenticateToken } = require('../middlewares/authMiddleware');
 const { validate, schemas } = require('../middlewares/validationMiddleware');
 const uploadMiddleware = require('../middlewares/uploadMiddleware');
@@ -24,8 +25,11 @@ router.patch('/requests/:id/cancel', requestController.cancelRequest);
 router.patch('/requests/:id/confirm-price', requestController.confirmRequestPrice);
 router.delete('/requests/:id', requestController.deleteRequest);
 
-// Upload routes
+// Upload and Profile routes
 router.post('/upload/images', uploadMiddleware.serviceImages, requestController.uploadImages);
+router.post('/avatar', uploadMiddleware.single('avatar', { folder: 'snapfix/profiles' }), userController.uploadAvatar);
+router.patch('/profile', userController.updateProfile);
+router.get('/profile', userController.getProfile);
 
 // Vehicle management routes
 router.get('/vehicles', customerController.getVehicles);

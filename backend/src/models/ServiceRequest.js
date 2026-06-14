@@ -167,6 +167,18 @@ const serviceRequestSchema = new mongoose.Schema({
     type: Number,
     min: [0, 'Final amount cannot be negative']
   },
+  workSummary: {
+    type: String,
+    maxlength: [1000, 'Work summary cannot exceed 1000 characters']
+  },
+  partsUsed: [{
+    name: { type: String, required: true },
+    cost: { type: Number, required: true }
+  }],
+  recommendations: {
+    type: String,
+    maxlength: [1000, 'Recommendations cannot exceed 1000 characters']
+  },
   reviewId: {
     type: mongoose.Schema.ObjectId,
     ref: 'Review',

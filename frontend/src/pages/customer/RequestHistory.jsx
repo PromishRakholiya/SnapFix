@@ -114,8 +114,7 @@ const RequestHistory = () => {
   };
 
   const handleTrackRequest = (request) => {
-    setSelectedRequest(request);
-    setShowTracker(true);
+    navigate(`/customer/requests/${request._id}/track`);
   };
 
   const handlePayment = (request) => {

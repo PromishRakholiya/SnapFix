@@ -6,6 +6,12 @@ describe('Load Tests', () => {
   let userId;
 
   beforeAll(async () => {
+    // Clean up stale test data from previous crashed runs
+    const User = require('../../src/models/User');
+    const OTP = require('../../src/models/OTP');
+    await User.deleteMany({ email: { $regex: /^concurrent|^loadtest@example\.com/ } });
+    await OTP.deleteMany({ identifier: { $regex: /^concurrent|^loadtest@example\.com/ } });
+
     // Register a test user
     const userData = {
       name: 'Load Test User',
@@ -19,16 +25,29 @@ describe('Load Tests', () => {
       .post('/api/auth/register')
       .send(userData);
 
-    authToken = registerResponse.body.data.tokens.accessToken;
     userId = registerResponse.body.data.user.id;
+
+    // Manually verify user in the database to allow login/token generation
+    await User.updateOne({ _id: userId }, { isVerified: true });
+
+    // Log in to get the token
+    const loginResponse = await request(app)
+      .post('/api/auth/login')
+      .send({ email: userData.email, password: userData.password })
+      .expect(200);
+
+    authToken = loginResponse.body.data.tokens.accessToken;
 
     // Add a vehicle
     await request(app)
       .post('/api/customer/vehicles')
       .set('Authorization', `Bearer ${authToken}`)
       .send({
+        name: 'Load Test Vehicle',
         type: 'car',
-        model: 'Load Test Vehicle',
+        make: 'Honda',
+        model: 'Civic',
+        year: 2018,
         plate: 'LOAD123'
       });
   });
@@ -225,5 +244,15 @@ describe('Load Tests', () => {
         expect(response.body.success).toBe(false);
       });
     });
+  });
+
+  afterAll(async () => {
+    // Clean up test data
+    const User = require('../../src/models/User');
+    const OTP = require('../../src/models/OTP');
+    
+    if (userId) await User.deleteOne({ _id: userId });
+    await User.deleteMany({ email: { $regex: /^concurrent|^loadtest@example\.com/ } });
+    await OTP.deleteMany({ identifier: { $regex: /^concurrent|^loadtest@example\.com/ } });
   });
 });
