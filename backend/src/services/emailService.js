@@ -53,6 +53,9 @@ class EmailService {
         host: "smtp.gmail.com",
         port: 587,
         secure: false,
+        connectionTimeout: 5000,
+        greetingTimeout: 5000,
+        socketTimeout: 5000,
         auth: {
           user: process.env.EMAIL_USER, // Your Gmail address
           pass: process.env.EMAIL_PASS, // Your Gmail app password
