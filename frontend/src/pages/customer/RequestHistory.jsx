@@ -208,7 +208,7 @@ const RequestHistory = () => {
   };
 
   const canTrack = (status) => {
-    return ['assigned', 'enroute', 'in_progress'].includes(status);
+    return ['assigned', 'enroute', 'in_progress', 'completed'].includes(status);
   };
 
   const canPay = (request) => { // eslint-disable-line no-unused-vars

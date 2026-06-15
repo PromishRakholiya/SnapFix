@@ -137,9 +137,9 @@ const MechanicLiveTracker = () => {
   // Load chat messages
   const fetchChatMessages = useCallback(async () => {
     try {
-      const response = await chatApi.getMessages(requestId);
+      const response = await chatApi.getOrCreateConversation(requestId);
       if (response.success) {
-        setMessages(response.data.messages);
+        setMessages(response.data.messages || []);
       }
     } catch (error) {
       console.warn("Could not fetch chat history:", error);
@@ -431,9 +431,9 @@ const MechanicLiveTracker = () => {
   const customer = request.customerId;
 
   return (
-    <div className="relative h-[calc(100vh-80px)] flex flex-col lg:flex-row gap-6 overflow-hidden">
+    <div className="relative h-[calc(100vh-80px)] flex flex-col lg:flex-row gap-6 overflow-y-auto lg:overflow-hidden pb-6 lg:pb-0">
       {/* MAP VIEWPORT */}
-      <div className="flex-1 relative rounded-3xl overflow-hidden border border-white/[0.08] shadow-2xl h-[50vh] lg:h-full z-10">
+      <div className="relative rounded-3xl overflow-hidden border border-white/[0.08] shadow-2xl h-[50vh] shrink-0 lg:h-full lg:flex-1 z-10 w-full">
         <MapContainer
           center={getMapCenter()}
           zoom={14}

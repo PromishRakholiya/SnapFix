@@ -439,8 +439,7 @@ const CustomerDashboard = () => {
                 Emergency Hub
               </h3>
               <p className="text-xs font-semibold text-neutral-500 mb-5 leading-relaxed">
-                Stranded or facing a critical issue? Our priority dispatch goes
-                to you first.
+                Stranded or facing a critical issue? Our priority broadcast reaches all nearby mechanics immediately.
               </p>
               <Link to="/customer/mechanics">
                 <Button

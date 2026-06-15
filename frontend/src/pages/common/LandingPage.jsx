@@ -55,9 +55,9 @@ const features = [
     color: "from-warning-500/20 to-warning-600/5",
     accent: "text-warning-400",
     border: "border-warning-500/20",
-    title: "< 30 Min Response",
+    title: "Competitive Offers",
     description:
-      "Our network dispatch system connects you with the nearest available mechanic instantly.",
+      "Our network broadcasts your request to mechanics in your area so you can get competitive offers instantly.",
   },
   {
     icon: <ShieldCheckIcon className="h-6 w-6" />,
@@ -126,13 +126,13 @@ const steps = [
   },
   {
     num: "02",
-    title: "Get matched instantly",
-    desc: "Our system dispatches the nearest verified mechanic automatically.",
+    title: "Broadcast & Get Offers",
+    desc: "Your request is broadcasted to nearby mechanics who will send you competitive offers.",
   },
   {
     num: "03",
-    title: "Track & Chat",
-    desc: "Live GPS tracking and in-app chat keep you informed every step of the way.",
+    title: "Accept & Track",
+    desc: "Choose the best offer. Track your mechanic with live GPS and chat in-app.",
   },
   {
     num: "04",
@@ -316,7 +316,7 @@ const InteractiveSimulator = () => {
             Experience <span className="bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent">SnapFix Live</span>
           </h2>
           <p className="text-neutral-400 text-lg max-w-2xl mx-auto mt-4">
-            Search for verified mechanics near your location, select their profile, and watch them dispatch to you in real-time.
+            Search for verified mechanics near your location, and broadcast your request to receive competitive offers in real-time.
           </p>
         </div>
 
@@ -414,7 +414,7 @@ const InteractiveSimulator = () => {
                     </motion.div>
                   ) : (
                     <p className="text-neutral-500 text-sm italic text-center py-4">
-                      Select a nearby mechanic above to view details & dispatch...
+                      Select a nearby mechanic above to view details & broadcast your request...
                     </p>
                   )}
                 </div>
@@ -515,7 +515,7 @@ const InteractiveSimulator = () => {
           </div>
 
           {/* Interactive Live Map Simulator */}
-          <div className="lg:col-span-7 w-full aspect-[5/4] lg:aspect-auto lg:h-[500px] relative rounded-3xl overflow-hidden border border-white/[0.06] bg-[#0c0c0c] shadow-2xl flex items-center justify-center">
+          <div className="lg:col-span-7 w-full min-h-[400px] sm:min-h-[500px] lg:h-[500px] relative rounded-3xl overflow-hidden border border-white/[0.06] bg-[#0c0c0c] shadow-2xl flex items-center justify-center shrink-0">
             {/* Map Grid Background */}
             <div className="absolute inset-0 opacity-[0.03] bg-[linear-gradient(to_right,#808080_1px,transparent_1px),linear-gradient(to_bottom,#808080_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
 
