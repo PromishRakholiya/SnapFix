@@ -77,6 +77,34 @@ const CreateRequest = () => {
     }
   };
 
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+    let error = '';
+    
+    if (name === 'description') {
+      if (!value.trim()) error = 'Description is required';
+      else if (value.trim().length < 10) error = 'Description must be at least 10 characters';
+    } else if (name === 'vehicleInfo.type' && !value) {
+      error = 'Vehicle type is required';
+    } else if (name === 'vehicleInfo.model') {
+      if (!value.trim()) error = 'Vehicle model is required';
+      else if (value.trim().length < 2) error = 'Vehicle model must be at least 2 characters';
+    } else if (name === 'vehicleInfo.plate') {
+      if (!value.trim()) error = 'License plate is required';
+      else if (value.trim().length < 3) error = 'License plate must be at least 3 characters';
+    } else if (name === 'userExpectedPrice') {
+      if (value === undefined || value === null || value === '') {
+        error = 'Expected price is required';
+      } else if (isNaN(value) || Number(value) <= 0) {
+        error = 'Please enter a valid amount';
+      }
+    }
+
+    if (error) {
+      setErrors(prev => ({ ...prev, [name]: error }));
+    }
+  };
+
   const handleLocationSelect = (location) => {
     // Ensure location always has an address field
     const locationWithAddress = {
@@ -144,12 +172,28 @@ const CreateRequest = () => {
     const newErrors = {};
 
     if (!formData.issueType) newErrors.issueType = 'Issue type is required';
-    if (!formData.description.trim()) newErrors.description = 'Description is required';
+    if (!formData.description.trim()) {
+      newErrors.description = 'Description is required';
+    } else if (formData.description.trim().length < 10) {
+      newErrors.description = 'Description must be at least 10 characters';
+    }
     if (!formData.vehicleInfo.type) newErrors['vehicleInfo.type'] = 'Vehicle type is required';
-    if (!formData.vehicleInfo.model.trim()) newErrors['vehicleInfo.model'] = 'Vehicle model is required';
-    if (!formData.vehicleInfo.plate.trim()) newErrors['vehicleInfo.plate'] = 'License plate is required';
+    if (!formData.vehicleInfo.model.trim()) {
+      newErrors['vehicleInfo.model'] = 'Vehicle model is required';
+    } else if (formData.vehicleInfo.model.trim().length < 2) {
+      newErrors['vehicleInfo.model'] = 'Vehicle model must be at least 2 characters';
+    }
+    if (!formData.vehicleInfo.plate.trim()) {
+      newErrors['vehicleInfo.plate'] = 'License plate is required';
+    } else if (formData.vehicleInfo.plate.trim().length < 3) {
+      newErrors['vehicleInfo.plate'] = 'License plate must be at least 3 characters';
+    }
     if (!formData.location) newErrors.location = 'Location is required';
-    if (formData.userExpectedPrice === undefined || formData.userExpectedPrice === null || formData.userExpectedPrice === '') newErrors.userExpectedPrice = 'Expected price is required';
+    if (formData.userExpectedPrice === undefined || formData.userExpectedPrice === null || formData.userExpectedPrice === '') {
+      newErrors.userExpectedPrice = 'Expected price is required';
+    } else if (isNaN(formData.userExpectedPrice) || Number(formData.userExpectedPrice) <= 0) {
+      newErrors.userExpectedPrice = 'Please enter a valid amount';
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -244,6 +288,7 @@ const CreateRequest = () => {
               name="description"
               value={formData.description}
               onChange={handleInputChange}
+              onBlur={handleBlur}
               rows={4}
               className="w-full px-3 py-2 border border-white/[0.1] rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               placeholder="Please provide as much detail as possible about the issue..."
@@ -269,6 +314,7 @@ const CreateRequest = () => {
                 name="vehicleInfo.type"
                 value={formData.vehicleInfo.type}
                 onChange={handleInputChange}
+                onBlur={handleBlur}
                 className="w-full px-3 py-2 border border-white/[0.1] rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               >
                 <option value="">Select vehicle type</option>
@@ -288,6 +334,7 @@ const CreateRequest = () => {
               name="vehicleInfo.model"
               value={formData.vehicleInfo.model}
               onChange={handleInputChange}
+              onBlur={handleBlur}
               error={errors['vehicleInfo.model']}
               placeholder="e.g., Toyota Camry, Honda Civic"
             />
@@ -297,6 +344,7 @@ const CreateRequest = () => {
               name="vehicleInfo.plate"
               value={formData.vehicleInfo.plate}
               onChange={handleInputChange}
+              onBlur={handleBlur}
               error={errors['vehicleInfo.plate']}
               placeholder="e.g., ABC-1234"
             />
@@ -322,27 +370,36 @@ const CreateRequest = () => {
           </h2>
           
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {Object.entries(PRIORITY_LEVELS).map(([key, value]) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => setFormData(prev => ({ ...prev, priority: value }))}
-                className={`p-4 border-2 rounded-2xl text-center transition-all ${
-                  formData.priority === value
-                    ? 'border-primary-500 bg-primary-500/10'
-                    : 'border-white/[0.1] hover:border-secondary-400'
-                }`}
-              >
-                <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${priorityColors[value]}`}>
-                  {PRIORITY_LABELS[value]}
-                </div>
-                {value === 'emergency' && (
-                  <p className="text-xs text-neutral-500 mt-2">
-                    Additional charges may apply
-                  </p>
-                )}
-              </button>
-            ))}
+            {Object.entries(PRIORITY_LEVELS).map(([key, value]) => {
+              const isSelected = formData.priority === value;
+              let selectedClass = "border-primary-500 bg-primary-500/10";
+              if (isSelected) {
+                if (value === 'low') selectedClass = "border-secondary-500 bg-secondary-500/10";
+                if (value === 'high') selectedClass = "border-warning-500 bg-warning-500/10";
+                if (value === 'emergency') selectedClass = "border-danger-500 bg-danger-500/10";
+              }
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setFormData(prev => ({ ...prev, priority: value }))}
+                  className={`p-4 border-2 rounded-2xl text-center transition-all ${
+                    isSelected
+                      ? selectedClass
+                      : 'border-white/[0.1] hover:border-secondary-400'
+                  }`}
+                >
+                  <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${priorityColors[value]}`}>
+                    {PRIORITY_LABELS[value]}
+                  </div>
+                  {value === 'emergency' && (
+                    <p className="text-xs text-neutral-500 mt-2">
+                      Additional charges may apply
+                    </p>
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -366,6 +423,7 @@ const CreateRequest = () => {
                 name="userExpectedPrice"
                 value={formData.userExpectedPrice}
                 onChange={handleInputChange}
+                onBlur={handleBlur}
                 className={`block w-full pl-7 pr-12 border-2 rounded-2xl transition-all focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
                   errors.userExpectedPrice ? 'border-danger-300' : 'border-white/[0.1]'
                 }`}

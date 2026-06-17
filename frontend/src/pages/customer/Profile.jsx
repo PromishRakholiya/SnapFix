@@ -178,7 +178,7 @@ const CustomerProfile = () => {
               type="email"
               value={formData.email}
               onChange={handleInputChange}
-              disabled={!editing}
+              disabled={true}
               icon={<EnvelopeIcon className="w-5 h-5" />}
               required
             />

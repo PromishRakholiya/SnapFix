@@ -199,6 +199,32 @@ const BookService = () => {
     }
   };
 
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+    let error = '';
+    
+    if (name === 'description') {
+      if (!value.trim()) error = 'Please provide a description of the issue';
+      else if (value.trim().length < 10) error = 'Description must be at least 10 characters';
+    } else if (name === 'vehicleInfo.type' && !value) {
+      error = 'Please select vehicle type';
+    } else if (name === 'vehicleInfo.model' && (!value.trim() || value.trim().length < 2)) {
+      error = 'Please enter a valid vehicle model';
+    } else if (name === 'vehicleInfo.plate' && (!value.trim() || value.trim().length < 3)) {
+      error = 'Please enter a valid license plate';
+    } else if (name === 'userExpectedPrice') {
+      if (value === undefined || value === null || value === '') {
+        error = 'Please enter your expected price';
+      } else if (isNaN(value) || Number(value) <= 0) {
+        error = 'Please enter a valid amount';
+      }
+    }
+
+    if (error) {
+      setErrors(prev => ({ ...prev, [name]: error }));
+    }
+  };
+
   const handleLocationSelect = (location) => {
     // Ensure location always has an address field
     const locationWithAddress = {
@@ -260,8 +286,10 @@ const BookService = () => {
       newErrors.issueType = "Please select an issue type";
     }
 
-    if (!formData.description || !formData.description.trim()) {
+    if (!formData.description.trim()) {
       newErrors.description = "Please provide a description of the issue";
+    } else if (formData.description.trim().length < 10) {
+      newErrors.description = "Description must be at least 10 characters";
     }
 
     if (!formData.vehicleInfo.type) {
@@ -605,6 +633,7 @@ const BookService = () => {
             name="description"
             value={formData.description}
             onChange={handleInputChange}
+            onBlur={handleBlur}
             placeholder="Please provide a detailed description of the problem..."
             className={`w-full p-3 border rounded-2xl resize-none ${
               errors.description ? "border-danger-500" : "border-white/[0.1]"
@@ -724,6 +753,7 @@ const BookService = () => {
                 name="vehicleInfo.type"
                 value={formData.vehicleInfo.type}
                 onChange={handleInputChange}
+                onBlur={handleBlur}
                 className={`w-full p-3 border rounded-2xl ${
                   errors["vehicleInfo.type"]
                     ? "border-danger-500"
@@ -753,6 +783,7 @@ const BookService = () => {
                 name="vehicleInfo.model"
                 value={formData.vehicleInfo.model}
                 onChange={handleInputChange}
+                onBlur={handleBlur}
                 placeholder="e.g., Honda City, Maruti Swift"
                 className={`w-full p-3 border rounded-2xl ${
                   errors["vehicleInfo.model"]
@@ -776,6 +807,7 @@ const BookService = () => {
                 name="vehicleInfo.plate"
                 value={formData.vehicleInfo.plate}
                 onChange={handleInputChange}
+                onBlur={handleBlur}
                 placeholder="e.g., DL01AB1234"
                 className={`w-full p-3 border rounded-2xl ${
                   errors["vehicleInfo.plate"]
@@ -818,7 +850,7 @@ const BookService = () => {
             onLocationSelect={handleLocationSelect}
             initialLocation={formData.location}
             height="400px"
-            className="h-64 rounded-2xl overflow-hidden"
+            className="rounded-2xl"
           />
 
           {errors.location && (
@@ -833,22 +865,32 @@ const BookService = () => {
           </h2>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {Object.entries(PRIORITY_LEVELS).map(([key, value]) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() =>
-                  setFormData((prev) => ({ ...prev, priority: value }))
-                }
-                className={`p-4 border-2 rounded-2xl text-center transition-all ${
-                  formData.priority === value
-                    ? "border-primary-500 bg-primary-500/10 text-primary-400"
-                    : "border-white/[0.1] hover:border-secondary-400 text-neutral-300"
-                }`}
-              >
-                <div className="font-medium">{PRIORITY_LABELS[value]}</div>
-              </button>
-            ))}
+            {Object.entries(PRIORITY_LEVELS).map(([key, value]) => {
+              const isSelected = formData.priority === value;
+              let selectedClass = "border-primary-500 bg-primary-500/10 text-primary-400";
+              if (isSelected) {
+                if (value === 'low') selectedClass = "border-secondary-500 bg-secondary-500/10 text-secondary-400";
+                if (value === 'high') selectedClass = "border-warning-500 bg-warning-500/10 text-warning-400";
+                if (value === 'emergency') selectedClass = "border-danger-500 bg-danger-500/10 text-danger-400";
+              }
+              
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() =>
+                    setFormData((prev) => ({ ...prev, priority: value }))
+                  }
+                  className={`p-4 border-2 rounded-2xl text-center transition-all ${
+                    isSelected
+                      ? selectedClass
+                      : "border-white/[0.1] hover:border-secondary-400 text-neutral-300"
+                  }`}
+                >
+                  <div className="font-medium">{PRIORITY_LABELS[value]}</div>
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -872,6 +914,7 @@ const BookService = () => {
                 name="userExpectedPrice"
                 value={formData.userExpectedPrice}
                 onChange={handleInputChange}
+                onBlur={handleBlur}
                 className={`block w-full pl-7 pr-12 border-2 rounded-2xl transition-all focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
                   errors.userExpectedPrice
                     ? "border-danger-300"

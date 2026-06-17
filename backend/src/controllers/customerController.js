@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const ServiceRequest = require('../models/ServiceRequest');
 const Payment = require('../models/Payment');
+const MechanicVerification = require('../models/MechanicVerification');
 const logger = require('../config/logger');
 const mongoose = require('mongoose');
 
@@ -36,7 +37,7 @@ const getNearbyMechanics = async (req, res) => {
     if (search) {
       filter.$or = [
         { name: { $regex: search, $options: 'i' } },
-        { specialties: { $regex: search, $options: 'i' } }
+        { specializations: { $regex: search, $options: 'i' } }
       ];
     }
 
@@ -50,8 +51,19 @@ const getNearbyMechanics = async (req, res) => {
     console.log('Found mechanics:', mechanics.length);
     console.log('Filter used:', filter);
 
-    // Fetch live completed jobs counts for these mechanics from the ServiceRequest collection
+    // Fetch verifications for these mechanics to get correct shop details
     const mechanicIds = mechanics.map(m => m._id);
+    const verifications = await MechanicVerification.find({
+      mechanicId: { $in: mechanicIds },
+      status: 'approved'
+    }).lean();
+
+    const verificationMap = {};
+    verifications.forEach(v => {
+      verificationMap[v.mechanicId.toString()] = v;
+    });
+
+    // Fetch live completed jobs counts for these mechanics from the ServiceRequest collection
     const completedCounts = await ServiceRequest.aggregate([
       { $match: { mechanicId: { $in: mechanicIds }, status: 'completed' } },
       { $group: { _id: '$mechanicId', count: { $sum: 1 } } }
@@ -68,18 +80,63 @@ const getNearbyMechanics = async (req, res) => {
     const mechanicsWithDistance = mechanics
       .map(mechanic => {
         const completedJobs = completedCountMap[mechanic._id.toString()] || 0;
-        if (mechanic.location && mechanic.location.lat && mechanic.location.lng) {
+        
+        // Merge verification details
+        const verification = verificationMap[mechanic._id.toString()];
+        const shopName = verification ? verification.shopName : (mechanic.shopName || undefined);
+        const shopAddress = verification ? verification.shopAddress : mechanic.shopAddress;
+        const specializations = (verification && verification.specializations) 
+          ? verification.specializations 
+          : (mechanic.specializations || []);
+        const experience = (verification && verification.experience !== undefined)
+          ? verification.experience
+          : mechanic.experience;
+
+        // Build formatted address for location.address
+        let addressStr = '';
+        if (shopAddress) {
+          const parts = [];
+          if (shopAddress.street) parts.push(shopAddress.street);
+          if (shopAddress.city) parts.push(shopAddress.city);
+          if (shopAddress.state) parts.push(shopAddress.state);
+          if (shopAddress.zipCode) parts.push(shopAddress.zipCode);
+          if (shopAddress.country) parts.push(shopAddress.country);
+          addressStr = parts.join(', ');
+        }
+
+        const mergedMechanic = {
+          ...mechanic,
+          shopName,
+          shopAddress,
+          specializations,
+          specialties: specializations,
+          experience,
+          completedJobs
+        };
+
+        if (mergedMechanic.location) {
+          mergedMechanic.location = {
+            ...mergedMechanic.location,
+            address: addressStr || undefined
+          };
+        } else if (addressStr) {
+          mergedMechanic.location = {
+            address: addressStr
+          };
+        }
+
+        if (mergedMechanic.location && mergedMechanic.location.lat && mergedMechanic.location.lng) {
           const distance = calculateDistance(
             parseFloat(latitude),
             parseFloat(longitude),
-            mechanic.location.lat, // latitude
-            mechanic.location.lng  // longitude
+            mergedMechanic.location.lat, // latitude
+            mergedMechanic.location.lng  // longitude
           );
-          console.log(`Mechanic ${mechanic.name}: distance = ${distance}km`);
-          return { ...mechanic, completedJobs, distance };
+          console.log(`Mechanic ${mergedMechanic.name}: distance = ${distance}km`);
+          return { ...mergedMechanic, distance };
         }
-        console.log(`Mechanic ${mechanic.name}: no location data`);
-        return { ...mechanic, completedJobs, distance: null };
+        console.log(`Mechanic ${mergedMechanic.name}: no location data`);
+        return { ...mergedMechanic, distance: null };
       })
       .filter(mechanic => mechanic.distance !== null && (maxDistance === 'all' || mechanic.distance <= parseFloat(maxDistance)))
       .sort((a, b) => {
@@ -151,6 +208,50 @@ const getMechanicDetails = async (req, res) => {
       });
     }
 
+    // Get verification details
+    const verification = await MechanicVerification.findOne({ mechanicId, status: 'approved' }).lean();
+    
+    const shopName = verification ? verification.shopName : (mechanic.shopName || undefined);
+    const shopAddress = verification ? verification.shopAddress : mechanic.shopAddress;
+    const specializations = (verification && verification.specializations) 
+      ? verification.specializations 
+      : (mechanic.specializations || []);
+    const experience = (verification && verification.experience !== undefined)
+      ? verification.experience
+      : mechanic.experience;
+
+    // Build formatted address
+    let addressStr = '';
+    if (shopAddress) {
+      const parts = [];
+      if (shopAddress.street) parts.push(shopAddress.street);
+      if (shopAddress.city) parts.push(shopAddress.city);
+      if (shopAddress.state) parts.push(shopAddress.state);
+      if (shopAddress.zipCode) parts.push(shopAddress.zipCode);
+      if (shopAddress.country) parts.push(shopAddress.country);
+      addressStr = parts.join(', ');
+    }
+
+    const mergedMechanic = {
+      ...mechanic,
+      shopName,
+      shopAddress,
+      specializations,
+      specialties: specializations,
+      experience
+    };
+
+    if (mergedMechanic.location) {
+      mergedMechanic.location = {
+        ...mergedMechanic.location,
+        address: addressStr || undefined
+      };
+    } else if (addressStr) {
+      mergedMechanic.location = {
+        address: addressStr
+      };
+    }
+
     // Get reviews from completed service requests
     const completedRequests = await ServiceRequest.find({
       mechanicId,
@@ -175,7 +276,7 @@ const getMechanicDetails = async (req, res) => {
     });
 
     const mechanicWithReviews = {
-      ...mechanic,
+      ...mergedMechanic,
       completedJobs: completedJobsCount,
       reviews
     };

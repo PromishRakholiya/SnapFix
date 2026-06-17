@@ -218,19 +218,35 @@ const createServiceRequest = asyncHandler(async (req, res) => {
       }
     } else {
       // Broadcast booking - find and notify nearby mechanics within 25km
-      nearbyMechanics = await User.find({
+      const allMechanics = await User.find({
         role: 'mechanic',
-        isActive: true,
-        location: {
-          $near: {
-            $geometry: {
-              type: 'Point',
-              coordinates: [parsedLocation.lng, parsedLocation.lat]
-            },
-            $maxDistance: broadcastRadius * 1000 // Convert km to meters
-          }
+        isActive: true
+      });
+
+      // Helper function to calculate distance
+      const calculateDistance = (lat1, lng1, lat2, lng2) => {
+        const R = 6371; // Radius of the Earth in km
+        const dLat = (lat2 - lat1) * (Math.PI / 180);
+        const dLng = (lng2 - lng1) * (Math.PI / 180);
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+          Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+          Math.sin(dLng / 2) * Math.sin(dLng / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
+      };
+
+      nearbyMechanics = allMechanics.filter(mechanic => {
+        if (mechanic.location && mechanic.location.lat && mechanic.location.lng) {
+          const distance = calculateDistance(
+            parsedLocation.lat,
+            parsedLocation.lng,
+            mechanic.location.lat,
+            mechanic.location.lng
+          );
+          return distance <= broadcastRadius;
         }
-      }).limit(50); // Increased limit to accommodate more mechanics in 25km radius
+        return false;
+      }).slice(0, 50); // Limit to 50 mechanics
 
       if (nearbyMechanics.length > 0) {
         await notificationService.broadcastToMechanics(serviceRequest, nearbyMechanics);
@@ -697,25 +713,8 @@ const getMechanicTasks = asyncHandler(async (req, res) => {
     }
   }
 
-  // For pending requests, also filter by location if mechanic has location
   if (req.user.location && (!status || status === 'pending')) {
-    // Add location-based filtering for pending broadcast requests
-    const pendingFilter = {
-      status: 'pending',
-      $or: [
-        {
-          location: {
-            $near: {
-              $geometry: {
-                type: 'Point',
-                coordinates: [req.user.location.lng, req.user.location.lat]
-              },
-              $maxDistance: 50000 // 50km radius
-            }
-          }
-        }
-      ]
-    };
+    const pendingFilter = { status: 'pending' };
 
     if (status === 'pending') {
       filter.$or = [pendingFilter];
@@ -724,13 +723,42 @@ const getMechanicTasks = asyncHandler(async (req, res) => {
     }
   }
 
-  const requests = await ServiceRequest.find(filter)
+  const allRequests = await ServiceRequest.find(filter)
     .populate('customerId', 'name phone')
-    .sort({ createdAt: -1, priority: -1 })
-    .skip(skip)
-    .limit(limit);
+    .sort({ createdAt: -1, priority: -1 });
 
-  const total = await ServiceRequest.countDocuments(filter);
+  // Filter pending requests by distance manually (50km radius)
+  let requests = allRequests;
+  
+  if (req.user.location) {
+    const calculateDistance = (lat1, lng1, lat2, lng2) => {
+      const R = 6371; // Radius of the Earth in km
+      const dLat = (lat2 - lat1) * (Math.PI / 180);
+      const dLng = (lng2 - lng1) * (Math.PI / 180);
+      const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+        Math.sin(dLng / 2) * Math.sin(dLng / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
+    };
+
+    requests = allRequests.filter(reqItem => {
+      if (reqItem.status !== 'pending') return true; // keep assigned ones
+      if (reqItem.location && reqItem.location.lat && reqItem.location.lng) {
+        const distance = calculateDistance(
+          req.user.location.lat,
+          req.user.location.lng,
+          reqItem.location.lat,
+          reqItem.location.lng
+        );
+        return distance <= 50; // 50km
+      }
+      return true; // if no location, just keep it
+    });
+  }
+
+  const total = requests.length;
+  requests = requests.slice(skip, skip + limit);
 
   // Calculate distances for requests
   const requestsWithDistance = requests.map(request => {

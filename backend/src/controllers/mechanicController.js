@@ -927,33 +927,21 @@ const getAssignedRequests = async (req, res) => {
       const mechanicLocation = mechanic?.location;
 
       if (includeAvailable === 'true' && mechanicLocation?.lat) {
-        // Find requests assigned to this mechanic OR pending requests nearby
+        // Find requests assigned to this mechanic OR pending requests (we'll filter by distance in memory)
         filter = {
           $or: [
             { mechanicId: mechanicId },
-            {
-              status: 'pending',
-              mechanicId: null,
-              location: {
-                $near: {
-                  $geometry: {
-                    type: 'Point',
-                    coordinates: [mechanicLocation.lng, mechanicLocation.lat]
-                  },
-                  $maxDistance: 25000 // Default to 25km radius
-                }
-              }
-            }
+            { status: 'pending', mechanicId: null }
           ]
         };
         // If a specific status is requested, apply it correctly
         if (status) {
           if (status === 'available') {
-            filter = { status: 'pending', mechanicId: null }; // Just nearby pending
+            filter = { status: 'pending', mechanicId: null }; 
           } else if (status === 'active') {
-            filter.status = { $in: ['assigned', 'enroute', 'in_progress'] };
+            filter = { mechanicId: mechanicId, status: { $in: ['assigned', 'enroute', 'in_progress'] } };
           } else {
-            filter.status = status;
+            filter = { mechanicId: mechanicId, status: status };
           }
         }
       } else {
@@ -983,15 +971,40 @@ const getAssignedRequests = async (req, res) => {
 
     let requests, totalRequests;
     try {
-      [requests, totalRequests] = await Promise.all([
-        ServiceRequest.find(filter)
-          .populate('customerId', 'name email phone vehicles')
-          .sort({ createdAt: -1 })
-          .skip(skip)
-          .limit(parseInt(limit))
-          .lean(),
-        ServiceRequest.countDocuments(filter)
-      ]);
+      let allRequests = await ServiceRequest.find(filter)
+        .populate('customerId', 'name email phone vehicles')
+        .sort({ createdAt: -1 })
+        .lean();
+
+      if (includeAvailable === 'true' && mechanicLocation?.lat) {
+        const calculateDistance = (lat1, lng1, lat2, lng2) => {
+          const R = 6371; // Radius of the Earth in km
+          const dLat = (lat2 - lat1) * (Math.PI / 180);
+          const dLng = (lng2 - lng1) * (Math.PI / 180);
+          const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+            Math.sin(dLng / 2) * Math.sin(dLng / 2);
+          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+          return R * c;
+        };
+
+        allRequests = allRequests.filter(reqItem => {
+          if (reqItem.mechanicId && reqItem.mechanicId.toString() === mechanicId.toString()) return true;
+          if (reqItem.location && reqItem.location.lat && reqItem.location.lng) {
+            const dist = calculateDistance(
+              mechanicLocation.lat,
+              mechanicLocation.lng,
+              reqItem.location.lat,
+              reqItem.location.lng
+            );
+            return dist <= 25; // 25km
+          }
+          return true;
+        });
+      }
+
+      totalRequests = allRequests.length;
+      requests = allRequests.slice(skip, skip + parseInt(limit));
     } catch (queryError) {
       logger.error('Database query failed:', queryError);
       // Fallback to simple query

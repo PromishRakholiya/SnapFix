@@ -306,17 +306,35 @@ const MechanicDashboard = () => {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {requests.map((request) => (
-                    <div key={request._id} className="p-5 border border-white/[0.06] rounded-2xl hover:bg-white/[0.03] transition-all">
+                  {[...requests].sort((a, b) => {
+                    const weights = { emergency: 4, high: 3, medium: 2, low: 1 };
+                    const weightA = weights[a.priority] || 0;
+                    const weightB = weights[b.priority] || 0;
+                    if (weightA !== weightB) return weightB - weightA;
+                    return new Date(b.createdAt) - new Date(a.createdAt);
+                  }).map((request) => (
+                    <div key={request._id} className={`p-5 border ${request.priority === 'emergency' ? 'border-danger-500/30 bg-danger-500/5' : 'border-white/[0.06] hover:bg-white/[0.03]'} rounded-2xl transition-all`}>
                       <div className="flex flex-col sm:flex-row gap-4">
                         <div className="p-3 bg-white/[0.05] border border-white/[0.08] rounded-xl self-start">
                           {getStatusIcon(request.status)}
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center justify-between mb-2">
-                            <h3 className="text-lg font-bold text-white capitalize">
-                              {ISSUE_TYPE_LABELS[request.issueType] || request.issueType.replace('_', ' ')}
-                            </h3>
+                            <div className="flex items-center gap-3">
+                              <h3 className="text-lg font-bold text-white capitalize">
+                                {ISSUE_TYPE_LABELS[request.issueType] || request.issueType.replace('_', ' ')}
+                              </h3>
+                              {request.priority && (
+                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider border ${
+                                  request.priority === 'emergency' ? 'bg-danger-500/15 text-danger-400 border-danger-500/30' :
+                                  request.priority === 'high' ? 'bg-warning-500/15 text-warning-400 border-warning-500/30' :
+                                  request.priority === 'medium' ? 'bg-primary-500/15 text-primary-400 border-primary-500/30' :
+                                  'bg-secondary-500/15 text-secondary-400 border-secondary-500/30'
+                                }`}>
+                                  {request.priority}
+                                </span>
+                              )}
+                            </div>
                             <span className={`inline-flex items-center px-3 py-1 rounded-2xl text-xs font-bold ${
                               request.status === 'completed' ? 'bg-success-500/15 text-success-400' :
                               request.status === 'cancelled' ? 'bg-danger-500/15 text-danger-400' :
