@@ -12,10 +12,6 @@
 
 **SnapFix:** https://snapfix-frontend-beryl.vercel.app
 
-🎥 **Project Demonstration**
-
-**Video Demo:** https://drive.google.com/file/d/1Ew9jVtumVNd5hQaBtN2HSHqRCjUl9i3E/view?usp=sharing
-
 ---
 
 ## ⚡ Tech Stack
