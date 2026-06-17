@@ -96,13 +96,6 @@ SnapFix
 
 ---
 
-## 👨‍💻 Team
-
-### Team 38 - DOMinators
-**Odoo × CGC**
-
----
-
 <div align="center">
 
 ### 🛡️ SnapFix
