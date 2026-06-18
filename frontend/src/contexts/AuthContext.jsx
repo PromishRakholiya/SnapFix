@@ -378,6 +378,10 @@ export const AuthProvider = ({ children }) => {
     try {
       dispatch({ type: AUTH_ACTIONS.SET_LOADING, payload: true });
 
+      // Clear any existing session first to prevent session recovery conflicts
+      authService.logout();
+      socketService.disconnect();
+
       await authService.register(userData);
 
       dispatch({
@@ -404,7 +408,9 @@ export const AuthProvider = ({ children }) => {
       dispatch({ type: AUTH_ACTIONS.SET_LOADING, payload: false });
       toast.success('Email verified successfully! You can now login.');
       
-      // Reset to login state
+      // Clear any existing localStorage user/tokens and reset to login state
+      authService.logout();
+      socketService.disconnect();
       dispatch({
         type: AUTH_ACTIONS.LOGOUT,
       });
@@ -434,11 +440,11 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Reset password function
-  const resetPassword = async (email, otp, newPassword) => {
+  const resetPassword = async (token, newPassword) => {
     try {
       dispatch({ type: AUTH_ACTIONS.SET_LOADING, payload: true });
 
-      await authService.resetPassword(email, otp, newPassword);
+      await authService.resetPassword(token, newPassword);
 
       dispatch({ type: AUTH_ACTIONS.SET_LOADING, payload: false });
       toast.success('Password reset successful! You can now login.');

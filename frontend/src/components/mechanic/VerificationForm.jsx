@@ -12,8 +12,69 @@ import Input from "../common/Input";
 import Select from "../common/Select";
 import MapLocationPicker from "../common/MapLocationPicker";
 import mechanicVerificationService from "../../services/mechanicVerificationService";
-
 import toast from "react-hot-toast";
+
+const compressImage = (file, maxWidth = 1024, maxHeight = 1024, quality = 0.7) => {
+  return new Promise((resolve) => {
+    if (!file) {
+      resolve(null);
+      return;
+    }
+    // If it's a PDF, we can't compress it as an image
+    if (file.type === "application/pdf") {
+      resolve(file);
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target.result;
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              resolve(file); // fallback to original file if blob creation fails
+              return;
+            }
+            const compressedFile = new File([blob], file.name, {
+              type: "image/jpeg",
+              lastModified: Date.now(),
+            });
+            resolve(compressedFile);
+          },
+          "image/jpeg",
+          quality
+        );
+      };
+      img.onerror = () => resolve(file);
+    };
+    reader.onerror = () => resolve(file);
+  });
+};
 
 const VerificationForm = ({ onSuccess }) => {
   const [loading, setLoading] = useState(false);
@@ -257,14 +318,20 @@ const VerificationForm = ({ onSuccess }) => {
       }
       formDataToSend.append("documentType", formData.documentType);
 
-      // Add files
+      // Compress and add files
       if (files.shopImage) {
-        console.log("Adding shop image to FormData:", files.shopImage);
-        formDataToSend.append("shopImage", files.shopImage);
+        console.log("Compressing shop image...");
+        const compressedShopImage = await compressImage(files.shopImage);
+        console.log("Original shop image size:", (files.shopImage.size / 1024 / 1024).toFixed(2) + "MB");
+        console.log("Compressed shop image size:", (compressedShopImage.size / 1024 / 1024).toFixed(2) + "MB");
+        formDataToSend.append("shopImage", compressedShopImage);
       }
       if (files.documentImage) {
-        console.log("Adding document image to FormData:", files.documentImage);
-        formDataToSend.append("documentImage", files.documentImage);
+        console.log("Compressing document image...");
+        const compressedDocImage = await compressImage(files.documentImage);
+        console.log("Original document image size:", (files.documentImage.size / 1024 / 1024).toFixed(2) + "MB");
+        console.log("Compressed document image size:", (compressedDocImage.size / 1024 / 1024).toFixed(2) + "MB");
+        formDataToSend.append("documentImage", compressedDocImage);
       }
 
       console.log("FormData contents:");
@@ -311,12 +378,20 @@ const VerificationForm = ({ onSuccess }) => {
       }
       formDataToSend.append("documentType", formData.documentType);
 
-      // Add files only if new ones are selected
+      // Compress and add files only if new ones are selected
       if (files.shopImage) {
-        formDataToSend.append("shopImage", files.shopImage);
+        console.log("Compressing updated shop image...");
+        const compressedShopImage = await compressImage(files.shopImage);
+        console.log("Original shop image size:", (files.shopImage.size / 1024 / 1024).toFixed(2) + "MB");
+        console.log("Compressed shop image size:", (compressedShopImage.size / 1024 / 1024).toFixed(2) + "MB");
+        formDataToSend.append("shopImage", compressedShopImage);
       }
       if (files.documentImage) {
-        formDataToSend.append("documentImage", files.documentImage);
+        console.log("Compressing updated document image...");
+        const compressedDocImage = await compressImage(files.documentImage);
+        console.log("Original document image size:", (files.documentImage.size / 1024 / 1024).toFixed(2) + "MB");
+        console.log("Compressed document image size:", (compressedDocImage.size / 1024 / 1024).toFixed(2) + "MB");
+        formDataToSend.append("documentImage", compressedDocImage);
       }
 
       const response =

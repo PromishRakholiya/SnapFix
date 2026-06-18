@@ -105,11 +105,16 @@ const register = asyncHandler(async (req, res) => {
   });
 
   if (existingUser) {
-    return sendErrorResponse(
-      res,
-      409,
-      "User with this email or phone already exists",
-    );
+    // Delete unverified user
+    if (!existingUser.isVerified) {
+      await User.findByIdAndDelete(existingUser._id);
+    } else {
+      return sendErrorResponse(
+        res,
+        409,
+        "User with this email or phone already exists"
+      );
+    }
   }
 
   // Create user
@@ -710,6 +715,7 @@ const forgotPassword = [
       logger.info("Password reset email sent:", {
         userId: user._id,
         email: user.email,
+        resetUrl,
       });
 
       sendSuccessResponse(res, 200, "Password reset link sent to your email");

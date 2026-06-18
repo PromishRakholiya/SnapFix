@@ -10,6 +10,7 @@ import PageTransition from './components/common/PageTransition';
 import LoginForm from './components/auth/LoginForm';
 import RegisterForm from './components/auth/RegisterForm';
 import ForgotPassword from './components/auth/ForgotPassword';
+import ResetPassword from './components/auth/ResetPassword';
 
 // Landing page
 import LandingPage from './pages/common/LandingPage';
@@ -56,6 +57,7 @@ const AnimatedRoutes = () => {
         <Route path="/login" element={<PageTransition><LoginForm /></PageTransition>} />
         <Route path="/register" element={<PageTransition><RegisterForm /></PageTransition>} />
         <Route path="/forgot-password" element={<PageTransition><ForgotPassword /></PageTransition>} />
+        <Route path="/reset-password" element={<PageTransition><ResetPassword /></PageTransition>} />
 
         {/* Role-based redirect */}
         <Route path="/dashboard" element={<RoleBasedRedirect />} />

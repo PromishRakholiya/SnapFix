@@ -7,6 +7,7 @@ const Select = ({
   onChange, 
   error, 
   children, 
+  options,
   required = false,
   disabled = false,
   className = '',
@@ -28,7 +29,7 @@ const Select = ({
         onChange={onChange}
         disabled={disabled}
         className={`
-          w-full px-3 py-2.5 border rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500/50 transition-all
+          w-full px-4 py-3 border rounded-2xl shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500/40 transition-all duration-300 cursor-pointer
           ${error 
             ? 'border-danger-500/40 text-danger-400 focus:ring-danger-500/30 focus:border-danger-400' 
             : 'border-white/[0.1] text-neutral-100'
@@ -37,7 +38,15 @@ const Select = ({
         `}
         {...props}
       >
-        {children}
+        {options ? (
+          options.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))
+        ) : (
+          children
+        )}
       </select>
       
       {error && (

@@ -78,11 +78,10 @@ class AuthService {
   }
 
   // Reset password
-  async resetPassword(email, otp, newPassword) {
+  async resetPassword(token, newPassword) {
     try {
       const response = await api.post('/auth/reset-password', {
-        email,
-        otp,
+        token,
         newPassword
       });
       return response.data;

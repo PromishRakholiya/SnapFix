@@ -109,21 +109,23 @@ const uploadToCloudinaryMiddleware = (options = {}) => {
           ? req.files
           : Object.values(req.files).flat();
 
-        for (const file of files) {
-          const resourceType =
-            file.mimetype === "application/pdf" ? "raw" : "image";
-          const result = await uploadToCloudinary(file.buffer, {
-            resource_type: resourceType,
-            folder: options.folder || "snapfix",
-            public_id: options.generatePublicId
-              ? options.generatePublicId(file)
-              : undefined,
-          });
+        await Promise.all(
+          files.map(async (file) => {
+            const resourceType =
+              file.mimetype === "application/pdf" ? "raw" : "image";
+            const result = await uploadToCloudinary(file.buffer, {
+              resource_type: resourceType,
+              folder: options.folder || "snapfix",
+              public_id: options.generatePublicId
+                ? options.generatePublicId(file)
+                : undefined,
+            });
 
-          file.cloudinary = result;
-          file.url = result.secure_url;
-          file.public_id = result.public_id;
-        }
+            file.cloudinary = result;
+            file.url = result.secure_url;
+            file.public_id = result.public_id;
+          })
+        );
       }
 
       next();

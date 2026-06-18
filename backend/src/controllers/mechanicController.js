@@ -495,72 +495,81 @@ const getEarningsSummary = async (req, res) => {
     const finalStartDate = req.query.startDate ? new Date(req.query.startDate) : startDate;
     const finalEndDate = req.query.endDate ? new Date(req.query.endDate) : endDate;
 
-    // Get payments for the period
-    const payments = await Payment.find({
-      mechanicId: mechanicId,
-      status: 'success',
-      createdAt: { $gte: finalStartDate, $lte: finalEndDate }
-    }).populate('requestId', 'issueType status');
-
-    const totalEarnings = payments.reduce((sum, payment) => sum + payment.amount, 0);
-    const totalRequests = payments.length;
-    const averageEarning = totalRequests > 0 ? totalEarnings / totalRequests : 0;
-
-    // Get mechanic to fetch walletBalance
-    const mechanic = await User.findById(mechanicId).select('walletBalance');
-    const walletBalance = mechanic?.walletBalance || 0;
+    if (req.query.startDate) finalStartDate.setHours(0, 0, 0, 0);
+    if (req.query.endDate) finalEndDate.setHours(23, 59, 59, 999);
 
     // Get previous period for comparison
     const previousStartDate = new Date(finalStartDate);
     const previousEndDate = new Date(finalStartDate);
     previousStartDate.setTime(previousStartDate.getTime() - (finalEndDate.getTime() - finalStartDate.getTime()));
 
-    const previousPayments = await Payment.find({
-      mechanicId: mechanicId,
-      status: 'success',
-      createdAt: { $gte: previousStartDate, $lt: finalStartDate }
-    });
+    // Run all database queries in parallel!
+    const [
+      payments,
+      mechanic,
+      previousPayments,
+      completedRequestsCount,
+      totalRequestsCount,
+      topServices,
+      mechanicDetails
+    ] = await Promise.all([
+      Payment.find({
+        mechanicId: mechanicId,
+        status: 'success',
+        createdAt: { $gte: finalStartDate, $lte: finalEndDate }
+      }).populate('requestId', 'issueType status'),
+      
+      User.findById(mechanicId).select('walletBalance'),
+      
+      Payment.find({
+        mechanicId: mechanicId,
+        status: 'success',
+        createdAt: { $gte: previousStartDate, $lt: finalStartDate }
+      }),
+      
+      ServiceRequest.countDocuments({
+        mechanicId: mechanicId,
+        status: 'completed',
+        createdAt: { $gte: finalStartDate, $lte: finalEndDate }
+      }),
+      
+      ServiceRequest.countDocuments({
+        mechanicId: mechanicId,
+        createdAt: { $gte: finalStartDate, $lte: finalEndDate }
+      }),
+      
+      ServiceRequest.aggregate([
+        {
+          $match: {
+            mechanicId: new mongoose.Types.ObjectId(mechanicId),
+            status: 'completed',
+            createdAt: { $gte: finalStartDate, $lte: finalEndDate }
+          }
+        },
+        {
+          $group: {
+            _id: '$issueType',
+            count: { $sum: 1 },
+            totalAmount: { $sum: '$finalAmount' }
+          }
+        },
+        { $sort: { totalAmount: -1 } },
+        { $limit: 3 }
+      ]),
+      
+      User.findById(mechanicId).select('rating')
+    ]);
+
+    const totalEarnings = payments.reduce((sum, payment) => sum + payment.amount, 0);
+    const totalRequests = payments.length;
+    const averageEarning = totalRequests > 0 ? totalEarnings / totalRequests : 0;
+
+    const walletBalance = mechanic?.walletBalance || 0;
 
     const previousEarnings = previousPayments.reduce((sum, payment) => sum + payment.amount, 0);
     const growth = previousEarnings > 0
       ? ((totalEarnings - previousEarnings) / previousEarnings) * 100
       : 0;
-
-    // Get completed requests for completion rate
-    const completedRequestsCount = await ServiceRequest.countDocuments({
-      mechanicId: mechanicId,
-      status: 'completed',
-      createdAt: { $gte: finalStartDate, $lte: finalEndDate }
-    });
-
-    // Get total requests (including pending/active/cancelled) for the period
-    const totalRequestsCount = await ServiceRequest.countDocuments({
-      mechanicId: mechanicId,
-      createdAt: { $gte: finalStartDate, $lte: finalEndDate }
-    });
-
-    // Get top services
-    const topServices = await ServiceRequest.aggregate([
-      {
-        $match: {
-          mechanicId: new mongoose.Types.ObjectId(mechanicId),
-          status: 'completed',
-          createdAt: { $gte: finalStartDate, $lte: finalEndDate }
-        }
-      },
-      {
-        $group: {
-          _id: '$issueType',
-          count: { $sum: 1 },
-          totalAmount: { $sum: '$finalAmount' }
-        }
-      },
-      { $sort: { totalAmount: -1 } },
-      { $limit: 3 }
-    ]);
-
-    // Get mechanic's overall rating
-    const mechanicDetails = await User.findById(mechanicId).select('rating');
 
     res.json({
       success: true,
@@ -733,17 +742,55 @@ const getEarningsChart = async (req, res) => {
         intervalType = 'day';
     }
 
+    let finalStartDate = startDate;
+    let finalEndDate = endDate;
+
+    if (req.query.startDate) {
+      finalStartDate = new Date(req.query.startDate);
+      finalStartDate.setHours(0, 0, 0, 0);
+    }
+    if (req.query.endDate) {
+      finalEndDate = new Date(req.query.endDate);
+      finalEndDate.setHours(23, 59, 59, 999);
+    }
+
+    if (req.query.startDate && req.query.endDate) {
+      const diffTime = Math.abs(finalEndDate - finalStartDate);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      if (diffDays <= 7) {
+        intervals = diffDays || 1;
+        intervalType = 'day';
+      } else if (diffDays <= 31) {
+        intervals = diffDays;
+        intervalType = 'day';
+      } else if (diffDays <= 90) {
+        intervals = Math.ceil(diffDays / 7);
+        intervalType = 'week';
+      } else {
+        intervals = Math.ceil(diffDays / 30);
+        intervalType = 'month';
+      }
+    }
+
+    // Fetch all payments for this mechanic within the entire range in ONE single query
+    const allPayments = await Payment.find({
+      mechanicId: mechanicId,
+      status: 'success',
+      createdAt: { $gte: finalStartDate, $lte: finalEndDate }
+    }).lean();
+
     const chartData = [];
-    const intervalMs = (endDate.getTime() - startDate.getTime()) / intervals;
+    const intervalMs = (finalEndDate.getTime() - finalStartDate.getTime()) / intervals;
 
     for (let i = 0; i < intervals; i++) {
-      const intervalStart = new Date(startDate.getTime() + (i * intervalMs));
+      const intervalStart = new Date(finalStartDate.getTime() + (i * intervalMs));
       const intervalEnd = new Date(intervalStart.getTime() + intervalMs);
 
-      const payments = await Payment.find({
-        mechanicId: mechanicId,
-        status: 'success',
-        createdAt: { $gte: intervalStart, $lt: intervalEnd }
+      // Filter in-memory
+      const payments = allPayments.filter(payment => {
+        const payDate = new Date(payment.createdAt);
+        return payDate >= intervalStart && payDate < intervalEnd;
       });
 
       const amount = payments.reduce((sum, payment) => sum + payment.amount, 0);
@@ -830,12 +877,18 @@ const exportEarnings = async (req, res) => {
         startDate.setMonth(startDate.getMonth() - 1);
     }
 
+    const finalStartDate = req.query.startDate ? new Date(req.query.startDate) : startDate;
+    const finalEndDate = req.query.endDate ? new Date(req.query.endDate) : endDate;
+
+    if (req.query.startDate) finalStartDate.setHours(0, 0, 0, 0);
+    if (req.query.endDate) finalEndDate.setHours(23, 59, 59, 999);
+
     const payments = await Payment.find({
       mechanicId: mechanicId,
-      createdAt: { $gte: startDate, $lte: endDate }
+      createdAt: { $gte: finalStartDate, $lte: finalEndDate }
     })
-      .populate('serviceRequest', 'issueType status')
-      .populate('customer', 'name phone')
+      .populate('requestId', 'issueType status')
+      .populate('customerId', 'name phone')
       .sort({ createdAt: -1 });
 
     if (format === 'csv') {
@@ -844,10 +897,16 @@ const exportEarnings = async (req, res) => {
       ];
 
       payments.forEach(payment => {
+        const d = new Date(payment.createdAt);
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        const formattedDate = `${year}-${month}-${day}`;
+        
         csvData.push([
-          new Date(payment.createdAt).toLocaleDateString('en-IN'),
-          payment.serviceRequest?.issueType?.replace('_', ' ').toUpperCase() || 'N/A',
-          payment.customer?.name || 'N/A',
+          formattedDate,
+          payment.requestId?.issueType?.replace('_', ' ').toUpperCase() || 'N/A',
+          payment.customerId?.name || 'N/A',
           payment.amount,
           payment.status,
           payment._id
