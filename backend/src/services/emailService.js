@@ -1,18 +1,52 @@
-const emailProvider = require("./emailProvider");
+const nodemailer = require("nodemailer");
 const logger = require("../config/logger");
 
 class EmailService {
   constructor() {
-    this.transporter = emailProvider;
-    this.isConfigured = emailProvider.isConfigured;
+    this.transporter = null;
+    this.isConfigured = false;
+    this.initializeTransporter();
   }
 
   initializeTransporter() {
-    this.isConfigured = emailProvider.isConfigured;
+    try {
+      if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS || process.env.EMAIL_USER === "demo@gmail.com" || process.env.EMAIL_PASS === "demo_password") {
+        logger.warn("Email service not configured with valid credentials - running in demo mode");
+        this.isConfigured = false;
+        this.transporter = null;
+        return;
+      }
+
+      this.transporter = this.createTransporter();
+      this.isConfigured = true;
+      logger.info("Email service initialized successfully (SMTP)");
+    } catch (error) {
+      logger.error("Failed to initialize email service:", error.message);
+      this.isConfigured = false;
+      this.transporter = null;
+    }
   }
 
   createTransporter() {
-    return emailProvider;
+    try {
+      const transporter = nodemailer.createTransport({
+        host: process.env.EMAIL_HOST || "smtp.gmail.com",
+        port: parseInt(process.env.EMAIL_PORT) || 587,
+        secure: process.env.EMAIL_SECURE === "true",
+        connectionTimeout: 5000,
+        greetingTimeout: 5000,
+        socketTimeout: 5000,
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS,
+        },
+      });
+
+      return transporter;
+    } catch (error) {
+      logger.error("Failed to create email transporter:", error.message);
+      throw error;
+    }
   }
 
   async sendOTPEmail(email, otp, userName = "User") {

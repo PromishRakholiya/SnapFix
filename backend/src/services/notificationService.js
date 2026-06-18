@@ -1,4 +1,4 @@
-const emailProvider = require("./emailProvider");
+const nodemailer = require("nodemailer");
 const logger = require("../config/logger");
 
 // Notification service for email, SMS, and push notifications
@@ -84,7 +84,21 @@ class NotificationService {
   // Initialize email transporter
   initializeEmailTransporter() {
     try {
-      this.emailTransporter = emailProvider;
+      this.emailTransporter = nodemailer.createTransport({
+        host: process.env.EMAIL_HOST || "smtp.gmail.com",
+        port: parseInt(process.env.EMAIL_PORT) || 587,
+        secure: process.env.EMAIL_SECURE === "true",
+        connectionTimeout: 5000,
+        greetingTimeout: 5000,
+        socketTimeout: 5000,
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS,
+        },
+        tls: {
+          rejectUnauthorized: false,
+        },
+      });
 
       // Verify connection
       this.emailTransporter.verify((error, success) => {
