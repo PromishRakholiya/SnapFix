@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { 
+import {
   PhoneIcon,
   ChatBubbleLeftRightIcon,
   CheckCircleIcon,
@@ -119,9 +119,9 @@ const CustomerLiveTracker = () => {
   // Load chat history
   const fetchChatMessages = useCallback(async () => {
     try {
-      const response = await chatApi.getOrCreateConversation(requestId);
+      const response = await chatApi.getMessages(requestId);
       if (response.success) {
-        setMessages(response.data.messages || []);
+        setMessages(response.data.messages);
       }
     } catch (error) {
       console.warn("Could not load chat messages:", error);
@@ -155,7 +155,7 @@ const CustomerLiveTracker = () => {
       console.log("Customer Tracker: status-update:", data);
       if (data.requestId === requestId) {
         setRequest(prev => prev ? { ...prev, status: data.status } : null);
-        
+
         const statusMap = {
           offered: 'A mechanic has proposed a counter offer.',
           assigned: 'Mechanic confirmed and assigned!',
@@ -164,7 +164,7 @@ const CustomerLiveTracker = () => {
           completed: 'Service completed! Invoice is ready for payment.',
           cancelled: 'Service request cancelled.'
         };
-        
+
         if (statusMap[data.status]) {
           toast.success(statusMap[data.status]);
         }
@@ -351,8 +351,8 @@ const CustomerLiveTracker = () => {
 
           {/* Mechanic location marker */}
           {mechanicLocation && (
-            <Marker 
-              position={[mechanicLocation.lat, mechanicLocation.lng]} 
+            <Marker
+              position={[mechanicLocation.lat, mechanicLocation.lng]}
               icon={createMechanicIcon(mechanicLocation.heading)}
             >
               <Popup>
@@ -386,7 +386,7 @@ const CustomerLiveTracker = () => {
                 <p className="text-xs text-neutral-100">{sosAlert}</p>
               </div>
             </div>
-            <button 
+            <button
               onClick={() => setSosAlert(null)}
               className="p-1 hover:bg-white/10 rounded-full"
             >
@@ -417,7 +417,7 @@ const CustomerLiveTracker = () => {
         <div className="glass-panel p-6 rounded-3xl relative overflow-hidden">
           <div className="absolute top-0 right-0 -mr-12 -mt-12 w-28 h-28 rounded-full bg-primary-500/10 blur-2xl"></div>
           <div className="flex items-center space-x-3 mb-4">
-            <button 
+            <button
               onClick={() => navigate('/customer/requests')}
               className="p-2 hover:bg-white/5 rounded-xl border border-white/10 text-neutral-400 hover:text-white transition-colors"
             >
@@ -434,11 +434,10 @@ const CustomerLiveTracker = () => {
               <p className="text-xs text-neutral-500">Service Category</p>
               <p className="text-sm font-bold text-neutral-300 capitalize">{request.issueType?.replace('_', ' ')}</p>
             </div>
-            <div className={`px-3 py-1 rounded-full text-xs font-bold ${
-              request.status === 'completed' ? 'bg-success-500/15 text-success-400' :
+            <div className={`px-3 py-1 rounded-full text-xs font-bold ${request.status === 'completed' ? 'bg-success-500/15 text-success-400' :
               request.status === 'cancelled' ? 'bg-danger-500/15 text-danger-400' :
-              'bg-primary-500/15 text-primary-400'
-            }`}>
+                'bg-primary-500/15 text-primary-400'
+              }`}>
               {REQUEST_STATUS_LABELS[request.status]}
             </div>
           </div>
@@ -451,7 +450,7 @@ const CustomerLiveTracker = () => {
               <h3 className="text-base font-black text-success-400 mb-1">Service Completed</h3>
               <p className="text-xs text-neutral-400">The mechanic has completed the service and generated the invoice.</p>
             </div>
-            
+
             <div className="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-3 text-xs">
               {request.workSummary && (
                 <div className="border-b border-white/5 pb-2">
@@ -491,7 +490,7 @@ const CustomerLiveTracker = () => {
           <div className="bg-gradient-to-br from-warning-500/15 via-warning-500/5 to-transparent border border-warning-500/25 p-6 rounded-3xl animate-pulse shadow-xl">
             <h3 className="text-base font-black text-warning-400 mb-1">New Proposal Offered</h3>
             <p className="text-xs text-neutral-400 mb-4">The mechanic proposed a final quote for this service.</p>
-            
+
             <div className="bg-white/5 border border-white/10 rounded-2xl p-4 mb-4 flex justify-between items-center">
               <div>
                 <p className="text-xs text-neutral-400">Offer Amount</p>
@@ -533,7 +532,7 @@ const CustomerLiveTracker = () => {
               </div>
 
               <div className="flex space-x-2">
-                <a 
+                <a
                   href={`tel:${mechanic.phone}`}
                   className="p-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-neutral-300 hover:text-white transition-colors"
                   title="Call Mechanic"
@@ -607,11 +606,10 @@ const CustomerLiveTracker = () => {
               return (
                 <div key={idx} className="relative group">
                   {/* Bullet */}
-                  <div className={`absolute -left-[31px] top-0.5 w-4.5 h-4.5 rounded-full border-2 flex items-center justify-center transition-all ${
-                    isCurrent ? 'bg-primary-500 border-primary-400 ring-4 ring-primary-500/20 scale-110' :
+                  <div className={`absolute -left-[31px] top-0.5 w-4.5 h-4.5 rounded-full border-2 flex items-center justify-center transition-all ${isCurrent ? 'bg-primary-500 border-primary-400 ring-4 ring-primary-500/20 scale-110' :
                     isDone ? 'bg-success-500 border-success-400' :
-                    'bg-neutral-800 border-white/10'
-                  }`}>
+                      'bg-neutral-800 border-white/10'
+                    }`}>
                     {isDone && !isCurrent && <CheckCircleIcon className="h-3.5 w-3.5 text-white" />}
                   </div>
                   <div>
@@ -636,7 +634,7 @@ const CustomerLiveTracker = () => {
               <h3 className="font-extrabold text-white text-sm">Chat with {mechanic.name}</h3>
               <p className="text-xs text-neutral-500">Service Request #{request._id.slice(-8)}</p>
             </div>
-            <button 
+            <button
               onClick={() => setShowChat(false)}
               className="p-2 hover:bg-white/5 rounded-xl border border-white/10 text-neutral-400 hover:text-white transition-colors"
             >
@@ -657,11 +655,10 @@ const CustomerLiveTracker = () => {
                 const isMe = msg.sender === 'customer' || msg.senderId === request.customerId;
                 return (
                   <div key={index} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[80%] rounded-2xl px-4 py-2 text-xs leading-relaxed ${
-                      isMe 
-                        ? 'bg-primary-600 text-white rounded-br-none shadow-md shadow-primary-600/10' 
-                        : 'bg-neutral-800 text-neutral-200 rounded-bl-none border border-white/5'
-                    }`}>
+                    <div className={`max-w-[80%] rounded-2xl px-4 py-2 text-xs leading-relaxed ${isMe
+                      ? 'bg-primary-600 text-white rounded-br-none shadow-md shadow-primary-600/10'
+                      : 'bg-neutral-800 text-neutral-200 rounded-bl-none border border-white/5'
+                      }`}>
                       <p>{msg.message || msg.content}</p>
                       <span className="block text-[9px] text-right mt-1.5 opacity-60">
                         {formatTime(msg.timestamp)}

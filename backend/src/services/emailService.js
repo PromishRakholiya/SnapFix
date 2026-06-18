@@ -39,8 +39,8 @@ class EmailService {
   socketTimeout: 30000,
 
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
+    user: "0snapfix005@gmail.com",
+    pass: "mbql lywc vnup ojdp",
   },
 });
 
