@@ -1,73 +1,18 @@
-const nodemailer = require("nodemailer");
+const emailProvider = require("./emailProvider");
 const logger = require("../config/logger");
 
 class EmailService {
   constructor() {
-    this.transporter = null;
-    this.isConfigured = false;
-    this.initializeTransporter();
+    this.transporter = emailProvider;
+    this.isConfigured = emailProvider.isConfigured;
   }
 
   initializeTransporter() {
-    try {
-      // Check if email credentials are properly configured
-      if (
-        !process.env.EMAIL_USER ||
-        !process.env.EMAIL_PASS ||
-        process.env.EMAIL_USER === "demo@gmail.com" ||
-        process.env.EMAIL_PASS === "demo_password"
-      ) {
-        logger.warn(
-          "Email service not configured with valid credentials - running in demo mode",
-        );
-        this.isConfigured = false;
-        this.transporter = null;
-        return;
-      }
-
-      // Only create transporter if we have valid credentials
-      try {
-        this.transporter = this.createTransporter();
-        this.isConfigured = true;
-        logger.info("Email service initialized successfully");
-      } catch (transporterError) {
-        logger.error(
-          "Failed to create email transporter:",
-          transporterError.message,
-        );
-        this.isConfigured = false;
-        this.transporter = null;
-      }
-    } catch (error) {
-      logger.error("Failed to initialize email service:", error.message);
-      this.isConfigured = false;
-      this.transporter = null;
-    }
+    this.isConfigured = emailProvider.isConfigured;
   }
 
   createTransporter() {
-    try {
-      // Gmail configuration (you can also use other email providers)
-      const transporter = nodemailer.createTransport({
-        service: "gmail",
-        host: "smtp.gmail.com",
-        port: 587,
-        secure: false,
-        connectionTimeout: 5000,
-        greetingTimeout: 5000,
-        socketTimeout: 5000,
-        auth: {
-          user: process.env.EMAIL_USER, // Your Gmail address
-          pass: process.env.EMAIL_PASS, // Your Gmail app password
-        },
-      });
-
-      // Do not verify automatically
-      return transporter;
-    } catch (error) {
-      logger.error("Failed to create email transporter:", error.message);
-      throw error;
-    }
+    return emailProvider;
   }
 
   async sendOTPEmail(email, otp, userName = "User") {
