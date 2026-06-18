@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Create axios instance with default configuration
 const apiClient = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:4000/api',
+  baseURL: process.env.REACT_APP_API_URL || 'https://snapfix-hq4w.onrender.com/api',
   timeout: 30000, // 30 seconds
   headers: {
     'Content-Type': 'application/json',
