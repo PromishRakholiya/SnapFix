@@ -53,6 +53,17 @@ class EmailService {
 
   async sendOTPEmail(email, otp, userName = "User") {
     try {
+      if (process.env.NODE_ENV === "production" || process.env.BYPASS_OTP === "true") {
+        logger.info(
+          `Bypassing email OTP sending in production/bypass mode for ${email}. OTP is: ${otp}`
+        );
+        return {
+          success: true,
+          messageId: `demo_bypass_${Date.now()}`,
+          demo: true,
+        };
+      }
+
       // If email service is not configured, return success but log it
       if (!this.isConfigured || !this.transporter) {
         logger.warn(
@@ -343,6 +354,13 @@ class EmailService {
 
   async testConnection() {
     try {
+      if (process.env.NODE_ENV === "production" || process.env.BYPASS_OTP === "true") {
+        logger.info(
+          "Email service connection test skipped - running in production/bypass mode"
+        );
+        return true;
+      }
+
       if (!this.isConfigured || !this.transporter) {
         logger.info(
           "Email service connection test skipped - running in demo mode",

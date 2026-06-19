@@ -382,7 +382,14 @@ export const AuthProvider = ({ children }) => {
       authService.logout();
       socketService.disconnect();
 
-      await authService.register(userData);
+      const response = await authService.register(userData);
+
+      const requiresOTP = response.data?.requiresOTP !== false;
+
+      if (!requiresOTP) {
+        dispatch({ type: AUTH_ACTIONS.SET_LOADING, payload: false });
+        return { requiresOTP: false };
+      }
 
       dispatch({
         type: AUTH_ACTIONS.REGISTER_SUCCESS,
@@ -390,6 +397,7 @@ export const AuthProvider = ({ children }) => {
       });
       
       toast.success('Registration successful! Please verify your email.');
+      return { requiresOTP: true };
     } catch (error) {
       const errorMessage = error.message || 'Registration failed';
       dispatch({ type: AUTH_ACTIONS.SET_ERROR, payload: errorMessage });

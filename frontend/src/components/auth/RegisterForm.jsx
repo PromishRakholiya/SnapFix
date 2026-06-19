@@ -98,7 +98,7 @@ const RegisterForm = () => {
     setError('');
 
     try {
-      await register({
+      const result = await register({
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
@@ -106,8 +106,12 @@ const RegisterForm = () => {
         role: formData.role,
       });
       
-      setTempEmail(formData.email);
-      setShowOTPModal(true);
+      if (result && result.requiresOTP === false) {
+        navigate('/login');
+      } else {
+        setTempEmail(formData.email);
+        setShowOTPModal(true);
+      }
     } catch (err) {
       setError(err.message || 'Registration failed. Please try again.');
     } finally {

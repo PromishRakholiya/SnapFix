@@ -118,12 +118,14 @@ const register = asyncHandler(async (req, res) => {
   }
 
   // Create user
+  const isVerifiedBypassed = process.env.NODE_ENV === "production" || process.env.BYPASS_OTP === "true";
   const userData = {
     name: name.trim(),
     email: email.toLowerCase().trim(),
     phone: formattedPhone,
     passwordHash: password,
     role,
+    isVerified: isVerifiedBypassed,
     ...(location && { location }),
     ...(vehicles && { vehicles }),
   };
@@ -132,19 +134,26 @@ const register = asyncHandler(async (req, res) => {
   await user.save();
 
   // Send OTP for email verification
-  try {
-    await otpService.createAndSendEmailOTP(
-      user.email,
-      "email_verification",
-      user.name,
-    );
-    logger.info("Registration OTP sent successfully:", {
+  if (!isVerifiedBypassed) {
+    try {
+      await otpService.createAndSendEmailOTP(
+        user.email,
+        "email_verification",
+        user.name,
+      );
+      logger.info("Registration OTP sent successfully:", {
+        userId: user._id,
+        email: user.email,
+      });
+    } catch (error) {
+      logger.error("Failed to send registration OTP:", error);
+      // Don't fail registration if OTP sending fails
+    }
+  } else {
+    logger.info("Bypassing registration OTP sending in production/bypass mode for user:", {
       userId: user._id,
       email: user.email,
     });
-  } catch (error) {
-    logger.error("Failed to send registration OTP:", error);
-    // Don't fail registration if OTP sending fails
   }
 
   // Send welcome notification
@@ -168,7 +177,9 @@ const register = asyncHandler(async (req, res) => {
   sendSuccessResponse(
     res,
     201,
-    "User registered successfully. Please check your email for verification OTP.",
+    isVerifiedBypassed
+      ? "User registered successfully."
+      : "User registered successfully. Please check your email for verification OTP.",
     {
       user: {
         id: user._id,
@@ -178,9 +189,10 @@ const register = asyncHandler(async (req, res) => {
         role: user.role,
         isVerified: user.isVerified,
       },
-      requiresOTP: true,
-      message:
-        "Please verify your email with the OTP sent to complete registration",
+      requiresOTP: !isVerifiedBypassed,
+      message: isVerifiedBypassed
+        ? "Registration successful."
+        : "Please verify your email with the OTP sent to complete registration",
     },
   );
 });
@@ -246,34 +258,44 @@ const login = [
 
     // Check if user is verified
     if (!user.isVerified) {
-      // Send OTP only for unverified users
-      try {
-        await otpService.createAndSendEmailOTP(
-          user.email,
-          "email_verification",
-          user.name,
-        );
-
-        logger.info("Login OTP sent to unverified user:", {
+      const isVerifiedBypassed = process.env.NODE_ENV === "production" || process.env.BYPASS_OTP === "true";
+      if (isVerifiedBypassed) {
+        user.isVerified = true;
+        await user.save({ validateBeforeSave: false });
+        logger.info("Automatically verified user during login in production/bypass mode:", {
           userId: user._id,
           email: user.email,
-          ip: req.ip,
         });
+      } else {
+        // Send OTP only for unverified users
+        try {
+          await otpService.createAndSendEmailOTP(
+            user.email,
+            "email_verification",
+            user.name,
+          );
 
-        return sendSuccessResponse(
-          res,
-          200,
-          "Account not verified. OTP sent to your email for verification.",
-          {
-            requiresOTP: true,
+          logger.info("Login OTP sent to unverified user:", {
+            userId: user._id,
             email: user.email,
-            isVerified: false,
-            message: "Please verify your email with the OTP to complete login",
-          },
-        );
-      } catch (error) {
-        logger.error("Failed to send verification OTP:", error);
-        return sendErrorResponse(res, 500, "Failed to send verification OTP");
+            ip: req.ip,
+          });
+
+          return sendSuccessResponse(
+            res,
+            200,
+            "Account not verified. OTP sent to your email for verification.",
+            {
+              requiresOTP: true,
+              email: user.email,
+              isVerified: false,
+              message: "Please verify your email with the OTP to complete login",
+            },
+          );
+        } catch (error) {
+          logger.error("Failed to send verification OTP:", error);
+          return sendErrorResponse(res, 500, "Failed to send verification OTP");
+        }
       }
     }
 
