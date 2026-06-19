@@ -1,9 +1,18 @@
 import axios from "axios";
 import toast from "react-hot-toast";
 
+// Create helper to dynamically set base URL based on browser location
+const getBaseURL = () => {
+  const hostname = window.location.hostname;
+  if (hostname === "localhost" || hostname === "127.0.0.1") {
+    return "http://localhost:4000/api";
+  }
+  return process.env.REACT_APP_API_URL || "https://snapfix-hq4w.onrender.com/api";
+};
+
 // Create axios instance with base configuration
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || "http://localhost:4000/api",
+  baseURL: getBaseURL(),
   timeout: 30000,
 });
 
@@ -44,7 +53,7 @@ api.interceptors.response.use(
         const refreshToken = localStorage.getItem("refreshToken");
         if (refreshToken) {
           const response = await axios.post(
-            `${process.env.REACT_APP_API_URL || "http://localhost:4000/api"}/auth/refresh-token`,
+            `${getBaseURL()}/auth/refresh-token`,
             { refreshToken },
           );
 

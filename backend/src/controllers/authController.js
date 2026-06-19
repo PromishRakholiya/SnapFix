@@ -118,7 +118,7 @@ const register = asyncHandler(async (req, res) => {
   }
 
   // Create user
-  const isVerifiedBypassed = process.env.NODE_ENV === "production" || process.env.BYPASS_OTP === "true";
+  const isVerifiedBypassed = process.env.BYPASS_OTP !== "false";
   const userData = {
     name: name.trim(),
     email: email.toLowerCase().trim(),
@@ -258,7 +258,7 @@ const login = [
 
     // Check if user is verified
     if (!user.isVerified) {
-      const isVerifiedBypassed = process.env.NODE_ENV === "production" || process.env.BYPASS_OTP === "true";
+      const isVerifiedBypassed = process.env.BYPASS_OTP !== "false";
       if (isVerifiedBypassed) {
         user.isVerified = true;
         await user.save({ validateBeforeSave: false });

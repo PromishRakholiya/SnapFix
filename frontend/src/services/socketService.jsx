@@ -13,15 +13,25 @@ class SocketService {
       this.disconnect();
     }
 
+    const getSocketURL = () => {
+      const hostname = window.location.hostname;
+      if (hostname === "localhost" || hostname === "127.0.0.1") {
+        return "http://localhost:4000";
+      }
+      return process.env.REACT_APP_SOCKET_URL || 'https://snapfix-hq4w.onrender.com';
+    };
+
+    const socketUrl = getSocketURL();
+
     // Connect to main socket
-    this.socket = io(process.env.REACT_APP_SOCKET_URL || 'http://localhost:4000', {
+    this.socket = io(socketUrl, {
       auth: { token },
       transports: ['websocket', 'polling'],
       timeout: 20000,
     });
 
     // Connect to requests namespace
-    this.requestNamespace = io(`${process.env.REACT_APP_SOCKET_URL || 'http://localhost:4000'}/requests`, {
+    this.requestNamespace = io(`${socketUrl}/requests`, {
       auth: { token },
       transports: ['websocket', 'polling'],
       timeout: 20000,

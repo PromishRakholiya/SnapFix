@@ -18,7 +18,7 @@ class OTPService {
   // Create and send OTP for email verification
   async createAndSendEmailOTP(email, purpose = 'email_verification', userName = 'User') {
     try {
-      if (process.env.NODE_ENV === "production" || process.env.BYPASS_OTP === "true") {
+      if (process.env.BYPASS_OTP !== "false") {
         logger.info(`Bypassing createAndSendEmailOTP in production/bypass mode for ${email}`);
         return {
           success: true,
@@ -79,7 +79,7 @@ class OTPService {
 
   async verifyOTP(identifier, otpCode, purpose = 'email_verification', ipAddress = null, userAgent = null) {
     try {
-      if (process.env.NODE_ENV === "production" || process.env.BYPASS_OTP === "true") {
+      if (process.env.BYPASS_OTP !== "false") {
         logger.info(`Bypassing verifyOTP in production/bypass mode for ${identifier}`);
         return {
           success: true,
