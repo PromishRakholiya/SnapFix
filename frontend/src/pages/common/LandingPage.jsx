@@ -935,20 +935,24 @@ const LandingPage = () => {
           initial="hidden"
           animate="visible"
           custom={3}
-          className="flex flex-col sm:flex-row gap-4 justify-center mb-16"
+          className="w-full max-w-sm sm:max-w-none flex flex-col sm:flex-row gap-3.5 sm:gap-4 justify-center items-stretch sm:items-center mb-16"
         >
           <Link
             to="/register"
-            className="group inline-flex items-center gap-2.5 bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-400 hover:to-orange-400 text-white font-bold px-8 py-4 rounded-2xl text-base shadow-xl shadow-red-500/20 hover:shadow-red-500/30 transition-all duration-300 hover:-translate-y-1"
+            className="group relative inline-flex items-center justify-center gap-3 bg-gradient-to-r from-red-500 via-orange-500 to-red-600 hover:from-red-400 hover:via-orange-400 hover:to-red-500 text-white font-extrabold px-8 py-4 rounded-2xl text-base shadow-xl shadow-red-500/25 hover:shadow-red-500/40 transition-all duration-300 hover:-translate-y-1 active:translate-y-0 overflow-hidden"
           >
-            Get Help Now
+            {/* Shimmer pulse effect */}
+            <span className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 pointer-events-none rounded-2xl" />
+            <BoltIcon className="h-5 w-5 text-yellow-300 animate-pulse shrink-0" />
+            <span className="tracking-wide">Get Help Now</span>
+            <ArrowRightIcon className="h-4 w-4 shrink-0 group-hover:translate-x-1 transition-transform" />
           </Link>
           <Link
             to="/register?role=mechanic"
-            className="inline-flex items-center gap-2.5 bg-white/[0.05] hover:bg-white/[0.09] border border-white/[0.1] hover:border-white/[0.2] text-white font-semibold px-8 py-4 rounded-2xl text-base backdrop-blur-md transition-all duration-300 hover:-translate-y-1"
+            className="inline-flex items-center justify-center gap-2.5 bg-white/[0.05] hover:bg-white/[0.09] border border-white/[0.1] hover:border-white/[0.2] text-white font-semibold px-8 py-4 rounded-2xl text-base backdrop-blur-md transition-all duration-300 hover:-translate-y-1 active:translate-y-0"
           >
-            <WrenchScrewdriverIcon className="h-4 w-4 text-red-500" />
-            Join as Mechanic
+            <WrenchScrewdriverIcon className="h-4 w-4 text-red-500 shrink-0" />
+            <span>Join as Mechanic</span>
           </Link>
         </motion.div>
 
@@ -1186,9 +1190,11 @@ const LandingPage = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 to="/register"
-                className="group inline-flex items-center justify-center gap-2.5 bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-400 hover:to-orange-400 text-white font-bold px-8 py-4 rounded-2xl transition-all duration-300 hover:-translate-y-1"
+                className="group relative inline-flex items-center justify-center gap-3 bg-gradient-to-r from-red-500 via-orange-500 to-red-600 hover:from-red-400 hover:via-orange-400 hover:to-red-500 text-white font-extrabold px-8 py-4 rounded-2xl text-base shadow-xl shadow-red-500/25 hover:shadow-red-500/40 transition-all duration-300 hover:-translate-y-1 active:translate-y-0 overflow-hidden"
               >
-                Get Help Now
+                <BoltIcon className="h-5 w-5 text-yellow-300 animate-pulse shrink-0" />
+                <span className="tracking-wide">Get Help Now</span>
+                <ArrowRightIcon className="h-4 w-4 shrink-0 group-hover:translate-x-1 transition-transform" />
               </Link>
               <Link
                 to="/login"
@@ -1216,7 +1222,7 @@ const LandingPage = () => {
       </section>
 
       {/* ── Footer ───────────────────────────────────────────── */}
-      <footer className="border-t border-white/[0.05] py-12 px-6">
+      <footer className="border-t border-white/[0.05] py-12 px-6 pb-28 md:pb-12">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
           <Link to="/" className="flex items-center gap-1">
             <Logo className="h-8 w-8" showText={true} textClass="font-bold text-lg text-white" />
@@ -1240,6 +1246,27 @@ const LandingPage = () => {
           </p>
         </div>
       </footer>
+
+      {/* ── Fixed Mobile Emergency Action Bar ("Get Help Now" in fixed position on Mobile) ── */}
+      <div className="md:hidden fixed bottom-0 inset-x-0 z-40 p-3.5 pb-5 bg-[#080808]/95 backdrop-blur-2xl border-t border-white/[0.1] shadow-[0_-10px_35px_rgba(0,0,0,0.85)]">
+        <div className="max-w-md mx-auto flex items-center gap-2.5">
+          <Link
+            to="/register"
+            className="flex-1 group relative inline-flex items-center justify-center gap-2 bg-gradient-to-r from-red-500 via-orange-500 to-red-600 text-white font-extrabold py-3.5 px-5 rounded-2xl text-sm shadow-lg shadow-red-500/30 active:scale-[0.98] transition-all"
+          >
+            <BoltIcon className="h-4 w-4 text-yellow-300 animate-pulse shrink-0" />
+            <span className="tracking-wide">Get Help Now</span>
+            <ArrowRightIcon className="h-4 w-4 shrink-0 group-hover:translate-x-0.5 transition-transform" />
+          </Link>
+          <a
+            href="tel:18001234567"
+            className="inline-flex items-center justify-center p-3.5 bg-red-500/15 border border-red-500/30 text-red-400 rounded-2xl active:scale-95 transition-all hover:bg-red-500/25"
+            title="Call Emergency Hotline"
+          >
+            <PhoneIcon className="h-5 w-5 animate-pulse" />
+          </a>
+        </div>
+      </div>
     </div>
   );
 };
