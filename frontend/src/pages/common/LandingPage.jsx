@@ -941,8 +941,7 @@ const LandingPage = () => {
             to="/register"
             className="group inline-flex items-center gap-2.5 bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-400 hover:to-orange-400 text-white font-bold px-8 py-4 rounded-2xl text-base shadow-xl shadow-red-500/20 hover:shadow-red-500/30 transition-all duration-300 hover:-translate-y-1"
           >
-            Get Help Now — It's Free
-            <ArrowRightIcon className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+            Get Help Now
           </Link>
           <Link
             to="/register?role=mechanic"
