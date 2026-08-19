@@ -29,20 +29,31 @@ class EmailService {
 
   createTransporter() {
     try {
+      const host = process.env.EMAIL_HOST || "smtp.gmail.com";
+      const port = Number(process.env.EMAIL_PORT) || 587;
+      // secure is true for port 465, false for 587 (STARTTLS)
+      const secure = process.env.EMAIL_SECURE !== undefined 
+        ? process.env.EMAIL_SECURE === "true" 
+        : port === 465;
+
+      const user = process.env.EMAIL_USER || "snapfix005@gmail.com";
+      const pass = (process.env.EMAIL_PASS || "mbqllywcvnupojdp").replace(/\s+/g, "");
+
       const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST,
-  port: Number(process.env.EMAIL_PORT),
-  secure: true,
-
-  connectionTimeout: 30000,
-  greetingTimeout: 30000,
-  socketTimeout: 30000,
-
-  auth: {
-    user: "0snapfix005@gmail.com",
-    pass: "mbql lywc vnup ojdp",
-  },
-});
+        host,
+        port,
+        secure,
+        connectionTimeout: 10000,
+        greetingTimeout: 10000,
+        socketTimeout: 10000,
+        auth: {
+          user,
+          pass,
+        },
+        tls: {
+          rejectUnauthorized: false,
+        },
+      });
 
       return transporter;
     } catch (error) {

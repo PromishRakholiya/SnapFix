@@ -39,16 +39,21 @@ const logger = winston.createLogger({
   ],
 });
 
-// Add console transport for non-production environments
-if (process.env.NODE_ENV !== "production") {
-  logger.add(
-    new winston.transports.Console({
-      format: winston.format.combine(
-        winston.format.colorize(),
-        winston.format.simple(),
-      ),
-    }),
-  );
-}
+// Add console transport for all environments so Render/Cloud hosts capture stdout/stderr
+logger.add(
+  new winston.transports.Console({
+    format: process.env.NODE_ENV === "production"
+      ? winston.format.combine(
+          winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
+          winston.format.printf(({ timestamp, level, message, stack }) => {
+            return `${timestamp} [${level.toUpperCase()}]: ${stack || message}`;
+          })
+        )
+      : winston.format.combine(
+          winston.format.colorize(),
+          winston.format.simple()
+        ),
+  })
+);
 
 module.exports = logger;

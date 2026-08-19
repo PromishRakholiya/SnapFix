@@ -19,8 +19,13 @@ const ADMIN_NAME = process.env.ADMIN_NAME || "Super Admin";
 const ADMIN_PHONE = process.env.ADMIN_PHONE || "+911234567890";
 
 // Environment validation
-const requiredEnvVars = ["MONGODB_URI", "JWT_SECRET", "JWT_REFRESH_SECRET"];
+const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI;
+if (!mongoUri) {
+  logger.error("Missing required environment variable: MONGODB_URI or MONGO_URI");
+  process.exit(1);
+}
 
+const requiredEnvVars = ["JWT_SECRET", "JWT_REFRESH_SECRET"];
 const missingEnvVars = requiredEnvVars.filter(
   (varName) => !process.env[varName],
 );

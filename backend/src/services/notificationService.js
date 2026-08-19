@@ -84,32 +84,49 @@ class NotificationService {
   // Initialize email transporter
   initializeEmailTransporter() {
     try {
+      const emailUser = process.env.EMAIL_USER;
+      const emailPass = process.env.EMAIL_PASS;
+
+      // Skip real SMTP initialization if credentials are default/missing or BYPASS_OTP is enabled
+      if (!emailUser || !emailPass || emailUser === "demo@gmail.com" || process.env.BYPASS_OTP === "true") {
+        logger.info("Notification email service running in bypass/demo mode");
+        this.emailTransporter = null;
+        return;
+      }
+
+      const host = process.env.EMAIL_HOST || "smtp.gmail.com";
+      const port = parseInt(process.env.EMAIL_PORT) || 587;
+      const secure = process.env.EMAIL_SECURE !== undefined 
+        ? process.env.EMAIL_SECURE === "true" 
+        : port === 465;
+
       this.emailTransporter = nodemailer.createTransport({
-        host: process.env.EMAIL_HOST || "smtp.gmail.com",
-        port: parseInt(process.env.EMAIL_PORT) || 587,
-        secure: process.env.EMAIL_SECURE === "true",
+        host,
+        port,
+        secure,
         connectionTimeout: 5000,
         greetingTimeout: 5000,
         socketTimeout: 5000,
         auth: {
-          user: process.env.EMAIL_USER,
-          pass: process.env.EMAIL_PASS,
+          user: emailUser,
+          pass: emailPass.replace(/\s+/g, ""),
         },
         tls: {
           rejectUnauthorized: false,
         },
       });
 
-      // Verify connection
+      // Verify connection non-blockingly
       this.emailTransporter.verify((error, success) => {
         if (error) {
-          logger.error("Email transporter verification failed:", error);
+          logger.warn("Email transporter verification timed out or failed (will fallback to simulation): " + error.message);
         } else {
           logger.info("Email transporter ready for messages");
         }
       });
     } catch (error) {
-      logger.error("Failed to initialize email transporter:", error);
+      logger.error("Failed to initialize email transporter:", error.message);
+      this.emailTransporter = null;
     }
   }
 
