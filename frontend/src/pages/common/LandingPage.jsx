@@ -2,22 +2,16 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
   motion,
-  useScroll,
-  useTransform,
   AnimatePresence,
 } from "framer-motion";
 import {
   WrenchScrewdriverIcon,
   MapPinIcon,
-  ClockIcon,
   ShieldCheckIcon,
-  UserGroupIcon,
   StarIcon,
-  ArrowRightIcon,
   CheckIcon,
   BoltIcon,
   SignalIcon,
-  PhoneIcon,
   ChevronDownIcon,
   MagnifyingGlassIcon,
 } from "@heroicons/react/24/outline";
@@ -805,7 +799,6 @@ const LandingPage = () => {
               className="inline-flex items-center gap-2 bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-400 hover:to-orange-400 text-white text-sm font-bold px-5 py-2.5 rounded-xl shadow-lg shadow-red-500/20 hover:shadow-red-500/40 transition-all duration-300 hover:-translate-y-0.5"
             >
               Get Started Free
-              <ArrowRightIcon className="h-3.5 w-3.5" />
             </Link>
           </div>
 
@@ -945,7 +938,6 @@ const LandingPage = () => {
             <span className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 pointer-events-none rounded-2xl" />
             <BoltIcon className="h-5 w-5 text-yellow-300 animate-pulse shrink-0" />
             <span className="tracking-wide">Get Help Now</span>
-            <ArrowRightIcon className="h-4 w-4 shrink-0 group-hover:translate-x-1 transition-transform" />
           </Link>
           <Link
             to="/register?role=mechanic"
@@ -1194,7 +1186,6 @@ const LandingPage = () => {
               >
                 <BoltIcon className="h-5 w-5 text-yellow-300 animate-pulse shrink-0" />
                 <span className="tracking-wide">Get Help Now</span>
-                <ArrowRightIcon className="h-4 w-4 shrink-0 group-hover:translate-x-1 transition-transform" />
               </Link>
               <Link
                 to="/login"
@@ -1222,7 +1213,7 @@ const LandingPage = () => {
       </section>
 
       {/* ── Footer ───────────────────────────────────────────── */}
-      <footer className="border-t border-white/[0.05] py-12 px-6 pb-28 md:pb-12">
+      <footer className="border-t border-white/[0.05] py-12 px-6">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
           <Link to="/" className="flex items-center gap-1">
             <Logo className="h-8 w-8" showText={true} textClass="font-bold text-lg text-white" />
@@ -1246,27 +1237,6 @@ const LandingPage = () => {
           </p>
         </div>
       </footer>
-
-      {/* ── Fixed Mobile Emergency Action Bar ("Get Help Now" in fixed position on Mobile) ── */}
-      <div className="md:hidden fixed bottom-0 inset-x-0 z-40 p-3.5 pb-5 bg-[#080808]/95 backdrop-blur-2xl border-t border-white/[0.1] shadow-[0_-10px_35px_rgba(0,0,0,0.85)]">
-        <div className="max-w-md mx-auto flex items-center gap-2.5">
-          <Link
-            to="/register"
-            className="flex-1 group relative inline-flex items-center justify-center gap-2 bg-gradient-to-r from-red-500 via-orange-500 to-red-600 text-white font-extrabold py-3.5 px-5 rounded-2xl text-sm shadow-lg shadow-red-500/30 active:scale-[0.98] transition-all"
-          >
-            <BoltIcon className="h-4 w-4 text-yellow-300 animate-pulse shrink-0" />
-            <span className="tracking-wide">Get Help Now</span>
-            <ArrowRightIcon className="h-4 w-4 shrink-0 group-hover:translate-x-0.5 transition-transform" />
-          </Link>
-          <a
-            href="tel:18001234567"
-            className="inline-flex items-center justify-center p-3.5 bg-red-500/15 border border-red-500/30 text-red-400 rounded-2xl active:scale-95 transition-all hover:bg-red-500/25"
-            title="Call Emergency Hotline"
-          >
-            <PhoneIcon className="h-5 w-5 animate-pulse" />
-          </a>
-        </div>
-      </div>
     </div>
   );
 };
